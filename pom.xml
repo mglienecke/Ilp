@@ -36,7 +36,13 @@
             <artifactId>gson</artifactId>
             <version>2.8.8</version>
         </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>uk.ac.ed.inf</groupId>
+			<artifactId>ilpSampleJar</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+	</dependencies>
 
 	<!--<build>
 		<plugins>

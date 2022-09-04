@@ -1,8 +1,8 @@
 package uk.ac.ed.inf;
 
 public class LngLat {
-    private double longitude;
-    private double latitude;
+    public double longitude;
+    public double latitude;
     public LngLat(double longitude, double latitude){
         this.latitude = latitude;
         this.longitude = longitude;
@@ -24,11 +24,4 @@ public class LngLat {
         return new LngLat(-3.1912869215011597, 55.945535152517735);
     }
 
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
 }
