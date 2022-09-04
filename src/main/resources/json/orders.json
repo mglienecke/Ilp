@@ -7,6 +7,7 @@
     "creditCardExpiry": "05/24",
     "cvc": "123",
     "priceTotalInPence": 1400,
+    "orderOutcome": "InvalidCrc",
     "orderItems": [
       "Pizza1", "Pizza2", "Pizza3"
     ]
@@ -19,6 +20,7 @@
     "creditCardExpiry": "05/24",
     "cvc": "123",
     "priceTotalInPence": 1400,
+    "orderOutcome": "CardOutOfDate",
     "orderItems": [
       "Pizza1", "Pizza2", "Pizza3"
     ]
