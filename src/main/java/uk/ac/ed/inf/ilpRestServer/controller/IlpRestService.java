@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Objects;
 
 import com.google.gson.Gson;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ed.inf.ilpData.*;
 import uk.ac.ed.inf.ilpData.Order;
 import uk.ac.ed.inf.ilpData.Supplier;
@@ -45,6 +47,21 @@ public class IlpRestService {
 
 
     /**
+     * get the details for an order
+     * @param orderNo the order to search
+     * @return the order details or HTTP 404 if not found
+     */
+    @GetMapping("/orders/{orderNo}")
+    public OrderWithOutcome orderDetails(@PathVariable String orderNo){
+        var currentOrder = Arrays.stream(getOrders()).filter(o -> o.orderNo.equals(orderNo)).findFirst();
+        if (currentOrder.isPresent() == false){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "order not found");
+        }
+        return currentOrder.get();
+    }
+
+
+    /**
      * check if the order outcome provided matches the JSON definition
      * @param orderNo is the order no to be checked. If no or an invalid number is passed false is returned
      * @param outcomeToCheck the outcome which should be checked
@@ -52,10 +69,24 @@ public class IlpRestService {
      */
     @GetMapping("/orders/{orderNo}/isOrderOutcomeValid/{outcomeToCheck}")
     public Boolean isOrderOutcomeValid(@PathVariable String orderNo, @PathVariable OrderOutcome outcomeToCheck){
-        var orders = getOrders();
-        var currentOrder = Arrays.stream(orders).filter(o -> o.orderNo.equals(orderNo)).findFirst();
+        var currentOrder = Arrays.stream(getOrders()).filter(o -> o.orderNo.equals(orderNo)).findFirst();
         return currentOrder.filter(orderWithOutcome -> orderWithOutcome.orderOutcome == outcomeToCheck).isPresent();
     }
+
+    /**
+     * get the order outcome for an order
+     * @param orderNo the order to search
+     * @return the order outcome or HTTP 404 if not found
+     */
+    @GetMapping("/orders/{orderNo}/outcome")
+    public OrderOutcome orderOutcome(@PathVariable String orderNo){
+        var currentOrder = Arrays.stream(getOrders()).filter(o -> o.orderNo.equals(orderNo)).findFirst();
+        if (currentOrder.isPresent() == false){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "order not found");
+        }
+        return currentOrder.get().orderOutcome;
+    }
+
 
     /**
      * returns the suppliers in the system
@@ -68,14 +99,23 @@ public class IlpRestService {
     }
 
 
+    /**
+     * get the defined boundaries in the system
+     * @return a vector of boundaries
+     */
     @GetMapping("/boundaries")
     public Boundary[] boundaries() {
         return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/boundaries.json")))), Boundary[].class);
 
     }
 
-    @GetMapping("/test")
-    public TestItem test() {
-        return new TestItem("Hello from the ILP-REST-Service");
+    /**
+     * simple test method to test the service's availability
+     * @param input an optional input which will be echoed
+     * @return the echo
+     */
+    @GetMapping(value = {"/test/{input}", "/test"})
+    public TestItem test(@PathVariable(required = false) String input) {
+        return new TestItem(String.format("Hello from the ILP-REST-Service. Your provided value was: %s", input == null ? "not provided" : input));
     }
 }
