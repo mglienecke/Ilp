@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import uk.ac.ed.inf.ilpData.*;
 import uk.ac.ed.inf.ilpData.Order;
-import uk.ac.ed.inf.ilpData.Pizza;
 import uk.ac.ed.inf.ilpData.Supplier;
 
 /**
@@ -23,13 +22,7 @@ public class IlpRestService {
      */
     @GetMapping("/orders")
     public Order[] orders() {
-        InputStream ordersJsonFileStream = getClass().getClassLoader().getResourceAsStream("json/orders.json");
-        if (ordersJsonFileStream == null){
-            throw new RuntimeException("orders.json not present");
-        }
-        InputStreamReader isr = new InputStreamReader(ordersJsonFileStream);
-        BufferedReader br = new BufferedReader(isr);
-        return new Gson().fromJson(br, Order[].class);
+        return new Gson().fromJson(new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("json/orders.json"))), Order[].class);
     }
 
     /**
@@ -39,22 +32,14 @@ public class IlpRestService {
      */
     @GetMapping("/suppliers")
     public Supplier[] suppliers() {
-        return new Supplier[]{
-                new Supplier("M Pizza", 55.945535152517735, -3.1912869215011597, new Pizza[]{new Pizza("Pizza A", 1999), new Pizza("Pizza B", 2048)}),
-                new Supplier("Other Pizza", 55.945535152517735, -3.1912869215011597, new Pizza[]{new Pizza("Pizza X", 999), new Pizza("Student Special", 300)})
-        };
+        return new Gson().fromJson(new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("json/suppliers.json"))), Supplier[].class);
     }
 
 
     @GetMapping("/boundaries")
-    public IlpServiceBoundary[] boundaries() {
-        return new IlpServiceBoundary[]{
-                new IlpServiceBoundary("Forrest Hill", -3.192473, 55.946233),
-                new IlpServiceBoundary("KFC", -3.192473, 55.946233),
-                new IlpServiceBoundary("Forrest Hill", -3.192473, 55.946233),
-                new IlpServiceBoundary("Forrest Hill", -3.192473, 55.946233),
+    public Boundary[] boundaries() {
+        return new Gson().fromJson(new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("json/boundaries.json"))), Boundary[].class);
 
-        };
     }
 
     @GetMapping("/test")
