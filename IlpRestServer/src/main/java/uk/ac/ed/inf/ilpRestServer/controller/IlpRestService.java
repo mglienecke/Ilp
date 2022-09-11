@@ -89,13 +89,13 @@ public class IlpRestService {
 
 
     /**
-     * returns the suppliers in the system
+     * returns the restaurants in the system
      *
      * @return array of suppliers
      */
-    @GetMapping("/suppliers")
-    public Supplier[] suppliers() {
-        return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/suppliers.json")))), Supplier[].class);
+    @GetMapping("/restaurants")
+    public Supplier[] restaurants() {
+        return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/restaurants.json")))), Supplier[].class);
     }
 
 
@@ -103,9 +103,9 @@ public class IlpRestService {
      * get the defined boundaries in the system
      * @return a vector of boundaries
      */
-    @GetMapping("/boundaries")
-    public Boundary[] boundaries() {
-        return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/boundaries.json")))), Boundary[].class);
+    @GetMapping("/centralArea")
+    public Boundary[] centralArea() {
+        return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/centralarea.json")))), Boundary[].class);
 
     }
 
