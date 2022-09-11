@@ -6,6 +6,8 @@
 	<modules>
 		<module>ilpSampleJar</module>
         <module>IlpRestServer</module>
+        <module>IlpTestRest</module>
+        <module>IlpRestTest</module>
     </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
