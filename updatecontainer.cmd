@@ -1,1 +1,1 @@
-az container create --resource-group IlpResourceGroup --name ilp-rest-server --image mglienec/ilp:rest-server --dns-name-label ilp-rest-server
+az container create --resource-group IlpResourceGroup --name ilp-rest-server --image mglienecke/ilp:rest-server --dns-name-label ilp-rest-server

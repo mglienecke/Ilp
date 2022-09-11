@@ -7,7 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * Hello world!
+ * Simple download application to retrieve a file from the REST server
  *
  */
 public class Download
@@ -16,7 +16,8 @@ public class Download
     {
         if (args.length != 2){
             System.err.println("Download Base-URL Filename");
-            System.err.println("you must supply the base address of the ILP REST Service e.g. http://restservice.somewhere and a filename to be loaded");
+            System.err.println("you must supply the base address of the ILP REST Service" +
+                    " e.g. http://restservice.somewhere and a filename to be loaded");
             System.exit(1);
         }
 
@@ -35,7 +36,8 @@ public class Download
         }
 
         try (BufferedInputStream in = new BufferedInputStream(finalUrl.openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(filenameToLoad, false)) {
+             FileOutputStream fileOutputStream =
+                     new FileOutputStream(filenameToLoad, false)) {
             byte[] dataBuffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
@@ -44,7 +46,8 @@ public class Download
 
             System.out.println("File was written: " + filenameToLoad);
         } catch (IOException e) {
-            System.err.format("Error loading file: %s from %s -> %s", filenameToLoad, finalUrl, e);
+            System.err.format("Error loading file: %s from %s -> %s",
+                    filenameToLoad, finalUrl, e);
         }
     }
 }
