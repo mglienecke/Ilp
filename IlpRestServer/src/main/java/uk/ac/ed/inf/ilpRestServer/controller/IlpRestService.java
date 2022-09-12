@@ -126,4 +126,14 @@ public class IlpRestService {
     public TestItem test(@PathVariable(required = false) String input) {
         return new TestItem(String.format("Hello from the ILP-REST-Service. Your provided value was: %s", input == null ? "not provided" : input));
     }
+
+
+    /**
+     * a simple alive check
+     * @return true (always)
+     */
+    @GetMapping(value = {"/isAlive"})
+    public boolean isAlive() {
+        return true;
+    }
 }
