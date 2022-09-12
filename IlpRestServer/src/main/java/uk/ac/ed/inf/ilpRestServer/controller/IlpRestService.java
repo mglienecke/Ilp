@@ -92,8 +92,8 @@ public class IlpRestService {
      * @return array of suppliers
      */
     @GetMapping("/restaurants")
-    public Supplier[] restaurants() {
-        return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/restaurants.json")))), Supplier[].class);
+    public Restaurant[] restaurants() {
+        return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/restaurants.json")))), Restaurant[].class);
     }
 
 
@@ -101,7 +101,7 @@ public class IlpRestService {
      * get the defined boundaries in the system
      * @return a vector of boundaries
      */
-    @GetMapping("/centralArea")
+    @GetMapping(value = {"/centralArea", "centralarea"})
     public Boundary[] centralArea() {
         return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/centralarea.json")))), Boundary[].class);
 
@@ -111,7 +111,7 @@ public class IlpRestService {
      * get the defined boundaries in the system
      * @return a vector of boundaries
      */
-    @GetMapping("/noFlyZones")
+    @GetMapping(value = {"/noFlyZones", "noflyzones"})
     public NoFlyZone[] noFlyZones() {
         return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/noflyzones.json")))), NoFlyZone[].class);
 

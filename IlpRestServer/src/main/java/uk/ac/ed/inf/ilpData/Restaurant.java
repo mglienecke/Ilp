@@ -4,7 +4,7 @@ package uk.ac.ed.inf.ilpData;
 /**
  * Acts as a simple pizza supplier for the drone service
  */
-public class Supplier {
+public class Restaurant {
 
     public String name;
     public double longitude;
