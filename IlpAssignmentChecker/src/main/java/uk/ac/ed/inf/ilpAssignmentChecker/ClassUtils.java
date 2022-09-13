@@ -1,11 +1,7 @@
 package uk.ac.ed.inf.ilpAssignmentChecker;
 
-import uk.ac.ed.inf.LngLat;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Optional;
 
 public class ClassUtils {
 

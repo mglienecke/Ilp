@@ -4,7 +4,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>pom</packaging>
 	<modules>
-		<module>ilpSampleJar</module>
+		<module>IlpSampleJar</module>
+		<module>IlpAssignmentChecker</module>
         <module>IlpRestServer</module>
         <module>IlpRestTest</module>
         <module>IlpFileDownloadSample</module>
