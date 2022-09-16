@@ -4,7 +4,7 @@ public enum OrderOutcome {
     Delivered,
     InvalidCardNumber,
     InvalidExpiryDate,
-    InvalidCrc,
+    InvalidCvv,
     InvalidTotal,
     InvalidPizzaNotDefined,
     InvalidPizzaCount,

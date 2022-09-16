@@ -1,6 +1,7 @@
 package uk.ac.ed.inf.ilpRestServer.controller;
 
 import com.google.gson.Gson;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +11,7 @@ import uk.ac.ed.inf.ilpData.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,14 +33,21 @@ public class IlpRestService {
 
     /**
      * returns sample orders (some of them invalid) from a template JSON file. The order outcome is removed
-     *1
+     *
+     * @param orderDate optional date in the format YYYY-MM-DD to find orders matching just the date
      * @return an array of orders
      */
-    @GetMapping("/orders")
-    public Order[] orders() {
+    @GetMapping(value = {"/orders/{orderDate}", "/orders"})
+    public Order[] orders(@PathVariable(required = false) String orderDate) {
         List<Order> result = new ArrayList<>();
-        for (var o  : getOrders()){
-            result.add(new Order(o.orderNo, o.orderDate, o.customer, o.creditCardNumber, o.creditCardExpiry, o.cvc, o.priceTotalInPence, o.orderItems.clone()));
+
+        var orders = getOrders();
+        if (orderDate != null){
+            result.addAll(Arrays.stream(orders).filter(o -> o.orderDate.equals(orderDate)).map(o -> new Order(o.orderNo, o.orderDate, o.customer, o.creditCardNumber, o.creditCardExpiry, o.cvv, o.priceTotalInPence, o.orderItems.clone())).toList());
+        } else {
+            for (var o  : orders){
+                result.add(new Order(o.orderNo, o.orderDate, o.customer, o.creditCardNumber, o.creditCardExpiry, o.cvv, o.priceTotalInPence, o.orderItems.clone()));
+            }
         }
         return result.toArray(new Order[0]);
     }
@@ -49,7 +58,7 @@ public class IlpRestService {
      * @param orderNo the order to search
      * @return the order details or HTTP 404 if not found
      */
-    @GetMapping("/orders/{orderNo}")
+    @GetMapping("/orders/{orderNo}/details")
     public OrderWithOutcome orderDetails(@PathVariable String orderNo){
         var currentOrder = Arrays.stream(getOrders()).filter(o -> o.orderNo.equals(orderNo)).findFirst();
         if (currentOrder.isPresent() == false){
@@ -101,7 +110,7 @@ public class IlpRestService {
      * get the defined boundaries in the system
      * @return a vector of boundaries
      */
-    @GetMapping(value = {"/centralArea", "centralarea"})
+    @GetMapping(value = {"/centralArea", "/centralarea"})
     public Boundary[] centralArea() {
         return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/centralarea.json")))), Boundary[].class);
 
@@ -111,7 +120,7 @@ public class IlpRestService {
      * get the defined boundaries in the system
      * @return a vector of boundaries
      */
-    @GetMapping(value = {"/noFlyZones", "noflyzones"})
+    @GetMapping(value = {"/noFlyZones", "/noflyzones"})
     public NoFlyZone[] noFlyZones() {
         return new Gson().fromJson(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("json/noflyzones.json")))), NoFlyZone[].class);
 

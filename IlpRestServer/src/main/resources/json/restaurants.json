@@ -20,12 +20,12 @@
     "latitude": 55.943284737579376,
     "menu": [
       {
-        "name": "Super Cheese",
+        "name": "Meat Lover",
         "priceInPence": 1400
       },
       {
-        "name": "Vegan",
-        "priceInPence": 900
+        "name": "Vegan Delight",
+        "priceInPence": 1100
       }
     ]
   }
@@ -40,7 +40,7 @@
         "priceInPence": 1400
       },
       {
-        "name": "Vegan",
+        "name": "All Shrooms",
         "priceInPence": 900
       }
     ]
@@ -52,11 +52,11 @@
     "latitude": 55.94390696616939,
     "menu": [
       {
-        "name": "Super Cheese",
+        "name": "Proper Pizza",
         "priceInPence": 1400
       },
       {
-        "name": "Vegan",
+        "name": "Pineapple & Ham & Cheese",
         "priceInPence": 900
       }
     ]
