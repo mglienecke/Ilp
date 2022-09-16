@@ -28,7 +28,7 @@ public class IlpOrdersSampleDataGenerator {
 
         // we use 2 years
         var startDate = LocalDate.of(2023, 1, 1);
-        var endDate =  LocalDate.of(2024, 12, 31);
+        var endDate =  LocalDate.of(2023, 5, 31);
 
 
         // needed to create mock data
@@ -67,10 +67,18 @@ public class IlpOrdersSampleDataGenerator {
 
                 switch (outcome){
                     case InvalidCvv -> {
-                        order.cvv = String.format("%03d", ThreadLocalRandom.current().nextInt(0, 999));
+                        var len = Integer.toString(ThreadLocalRandom.current().nextInt(1, 8));
+                        if (len.equals("3")){
+                            len = "4";
+                        }
+
+                        String formatString = "%" + len + "." + len + "s";
+                        order.cvv = String.format(formatString, ThreadLocalRandom.current().nextInt(0, 99999999));
                     }
                     case InvalidCardNumber -> {
-                        order.creditCardNumber = String.format("%016d", ThreadLocalRandom.current().nextLong(99999999999999L));
+                        var len = ThreadLocalRandom.current().nextInt(1, 16);
+                        String formatString = "%" + len + "." + len + "s";
+                        order.creditCardNumber = String.format(formatString, ThreadLocalRandom.current().nextLong(1, 9999999999999999L));
                     }
                     case InvalidTotal -> {
                         order.priceTotalInPence +=  ThreadLocalRandom.current().nextInt(-100, 1000);
