@@ -126,8 +126,7 @@ public class IlpOrdersSampleDataGenerator {
                         order.priceTotalInPence += currentRestaurant.menu[0].priceInPence;
                     }
 
-                    case Invalid -> {
-                        // this code is not used as such for results - only for initialization
+                    default -> {
                         continue;
                     }
                 }
