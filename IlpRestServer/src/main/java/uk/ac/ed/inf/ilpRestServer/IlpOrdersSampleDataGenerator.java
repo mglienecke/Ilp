@@ -47,7 +47,7 @@ public class IlpOrdersSampleDataGenerator {
                 order.orderNo = String.format("%08X", ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE));
                 order.orderDate = String.format("%04d-%02d-%02d", currentDate.getYear(), currentDate.getMonthValue(), currentDate.getDayOfMonth());
                 order.cvv = mock.cvvs().get();
-                order.creditCardNumber = mock.creditCards().types(VISA_16, MASTERCARD, AMERICAN_EXPRESS).get();
+                order.creditCardNumber = mock.creditCards().types(VISA_16, MASTERCARD).get();
                 order.customer = mock.names().get();
                 order.creditCardExpiry = String.format("%02d/%02d", ThreadLocalRandom.current().nextInt(1, 12), ThreadLocalRandom.current().nextInt(24, 28));
 
@@ -124,6 +124,14 @@ public class IlpOrdersSampleDataGenerator {
                         items.add(currentRestaurant.menu[0].name);
                         order.orderItems = items.toArray(order.orderItems);
                         order.priceTotalInPence += currentRestaurant.menu[0].priceInPence;
+                    }
+
+                    case ValidButNotDelivered -> {
+                        order.orderOutcome = OrderOutcome.Delivered;
+                    }
+
+                    case Delivered -> {
+                        ;
                     }
 
                     default -> {

@@ -54,6 +54,27 @@ public class IlpRestService {
 
 
     /**
+     * returns sample orders (some of them invalid) from a template JSON file without removal of information
+     *
+     * @param orderDate optional date in the format YYYY-MM-DD to find orders matching just the date
+     * @return an array of orders
+     */
+    @GetMapping(value = {"/ordersWithOutcome/{orderDate}", "/ordersWithOutcome"})
+    public OrderWithOutcome[] ordersWithOutcome(@PathVariable(required = false) String orderDate) {
+        List<OrderWithOutcome> result;
+
+        var orders = getOrders();
+        if (orderDate != null){
+            result = new ArrayList<>(Arrays.stream(orders).filter(o -> o.orderDate.equals(orderDate)).toList());
+        } else {
+            result = new ArrayList<>(List.of(orders));
+        }
+        return result.toArray(new OrderWithOutcome[0]);
+    }
+
+
+
+    /**
      * get the details for an order
      * @param orderNo the order to search
      * @return the order details or HTTP 404 if not found
