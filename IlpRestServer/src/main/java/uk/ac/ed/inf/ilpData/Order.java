@@ -7,7 +7,7 @@ public class Order {
     /**
      * the charge for any order
      */
-    public static final int OrderChargeInPence = 1000;
+    public static final int OrderChargeInPence = 100;
 
     public String orderNo;
     public String orderDate;
