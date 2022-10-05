@@ -10,45 +10,30 @@ import java.io.File;
 public class Checker {
 
     public static void main(String[] args) {
-        if (args.length < 3) {
-            System.err.println("Checker --jar | --compile  base directory JAR-file | Java-file classname");
-            System.err.println("Example 1: Checker --jar /Users/michael/Ilp/ilpSampleJar/out/ilpSampleJar uk.ac.ed.inf.LngLat");
-            System.err.println("Example 2: Checker --compile /Users/michael/Ilp/ilpSampleJar/src/main/java/uk/ac/ed/inf/LngLat.java uk.ac.ed.inf.LngLat");
+        if (args.length != 1) {
+            System.err.println("Checker JAR-file");
+            System.err.println("Example: Checker /Users/michael/Ilp/ilpSampleJar/out/ilpSampleJar");
             System.exit(1);
         }
 
-        boolean isJarMode = args[0].toLowerCase().equals("--jar");
-        String fileName = args[1];
-        String className = args[2];
-        File inputFile = new File(fileName);
+        String fileName = args[0];
 
-        if (inputFile.exists() == false) {
-            System.err.println(String.format("The file: %s does not exist", fileName));
+        if (!new File(fileName).exists()) {
+            System.err.println(String.format("The JAR-file: %s does not exist", fileName));
             System.exit(1);
         }
 
         String errorMessage = "";
+        String className = "uk.ac.ed.inf.LngLat";
 
         do {
             var loader = new JarLoader();
             try {
                 Class loadedClass = null;
 
-                if (isJarMode){
-                    System.out.println(String.format("Analysis of JAR-file: %s", fileName));
-                    var definedClassesInJar = loader.loadJarFile(fileName);
-                    loadedClass = loader.getClass(definedClassesInJar, className);
-                } else {
-                    var javaFileName = inputFile.getName().substring(0, inputFile.getName().indexOf("."));
-                    System.out.format("processing %s.java in directory %s", javaFileName, inputFile.getPath());
-                    loadedClass = loader.compileJavaAndReturnClass(inputFile.getParent(), javaFileName, className);
-                    if (loadedClass == null){
-                        errorMessage = "the class: " + className + " is not present in the JAR";
-                        break;
-                    }
-
-                }
-
+                System.out.println(String.format("Analysis of JAR-file: %s", fileName));
+                var definedClassesInJar = loader.loadJarFile(fileName);
+                loadedClass = loader.getClass(definedClassesInJar, className);
 
                 var constructor = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class});
                 if (constructor == null) {
@@ -58,13 +43,13 @@ public class Checker {
 
 
                 var method = ClassUtils.getMethodWithReturnType(loadedClass, "inCentralArea", null, boolean.class);
-                if (method == null){
+                if (method == null) {
                     errorMessage = "no method boolean inCentralArea() defined";
                     break;
                 }
 
-                method = ClassUtils.getMethodWithReturnType(loadedClass, "distanceTo", new Class[] { LngLat.class }, double.class);
-                if (method == null){
+                method = ClassUtils.getMethodWithReturnType(loadedClass, "distanceTo", new Class[]{LngLat.class}, double.class);
+                if (method == null) {
                     errorMessage = "no method double distanceTo(LngLat distanceObject) defined";
                     break;
                 }
@@ -86,7 +71,7 @@ public class Checker {
 
         } while (false);
 
-        if (errorMessage.isEmpty() == false){
+        if (errorMessage.isEmpty() == false) {
             System.err.println(errorMessage);
             System.exit(3);
         }

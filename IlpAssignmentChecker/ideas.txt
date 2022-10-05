@@ -1,0 +1,10 @@
+dir /s /B *.pom
+cd ---
+mvn clean
+mvn package -Dmaven.test.skip
+
+mvn package -Dmaven.test.skip -f Chris\PizzaDronz\pom.xml > Chris\mavenresult.txt
+
+
+target\PizzaDronz-1.0-SNAPSHOT.jar
+
