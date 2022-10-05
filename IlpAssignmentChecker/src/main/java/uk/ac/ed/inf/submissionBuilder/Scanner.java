@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -12,100 +13,80 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Scanner {
+    public static String BuildFileName = "maven_build.txt";
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
         if (args.length < 1) {
             System.err.println("Scanner maven | check");
             System.exit(1);
         }
 
-        if (args[0].equalsIgnoreCase("maven")){
-            if (System.getenv("JAVA_HOME") == null){
+        Boolean isMavenBuild = args[0].equalsIgnoreCase("maven");
+        List<Command> commandSet = new ArrayList<>();
+
+        if (isMavenBuild) {
+            if (System.getenv("JAVA_HOME") == null) {
                 System.err.println("JAVA_HOME is undefined");
                 System.exit(2);
             }
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                commandSet.add(new Command(new String[]{"cmd.exe", "/c", "mvn clean"}, null));
+                commandSet.add(new Command(new String[]{"cmd.exe", "/c", "mvn package -Dmaven.test.skip"}, null));
+                commandSet.add(new Command(new String[]{"cmd.exe", "/c", "dir target\\PizzaDronz-1.0-SNAPSHOT.jar"}, "target\\PizzaDronz-1.0-SNAPSHOT.jar"));
 
-            // System.out.println("PATH=" + System.getenv("PATH"));
+            } else {
+                commandSet.add(new Command(new String[]{"sh", "mvn", "clean"}, null));
+                commandSet.add(new Command(new String[]{"sh", "mvn", "package -Dmaven.test.skip"}, null));
+            }
         }
 
         List<String> pomFileDirectories = getSubmissionDirectories(".");
 
         // traverse all directories by clean and build the package -> then check for the JAR file
-        for (String currentDir: pomFileDirectories) {
+        for (String currentDir : pomFileDirectories) {
             System.out.println("Processing: " + currentDir);
 
-            //
-            if (args[0].equalsIgnoreCase("maven")){
-
-                try {
-                    ProcessBuilder pb = new ProcessBuilder();
-                    if (System.getProperty("os.name").toLowerCase().startsWith("windows")){
-                        // pb.command("cmd.exe", "/c", "mvn clean");
-                        pb.command("cmd.exe", "/c", "mvn package -Dmaven.test.skip");
-
-                    } else {
-                        pb.command("sh", "mvn", "clean");
+            if (isMavenBuild) {
+                var reportFilePath = Path.of(currentDir, BuildFileName);
+                if (Files.exists(reportFilePath)) {
+                    try {
+                        Files.delete(reportFilePath);
+                    } catch (IOException e) {
+                        System.err.println(e);
                     }
-
-                    pb.directory(new File(currentDir));
-
-                    /**
-                     *
-                    for (var env:  pb.environment().entrySet()) {
-                        System.out.format("%s:%s", env.getKey(), env.getValue());
-                    }
-                    */
-                    Process proc = pb.start();
-
-                    /**
-                    StreamGobbler outStreamGobbler = new StreamGobbler(proc.getInputStream(), System.out::println);
-                    StreamGobbler errStreamGobbler = new StreamGobbler(proc.getErrorStream(), System.out::println);
-
-                    Future<?> future = Executors.newSingleThreadExecutor().submit(outStreamGobbler);
-                    Future<?> future2 = Executors.newSingleThreadExecutor().submit(errStreamGobbler);
-
-                    int exitCode = proc.waitFor();
-
-                    future.get(10, TimeUnit.SECONDS);
-                    future2.get(10, TimeUnit.SECONDS);
-
-                     */
-
-
-                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-                    BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-
-                    // Read the output from the command
-                    System.out.println("Here is the standard output of the command:\n");
-                    String input = null;
-                    while ((input = stdInput.readLine()) != null) {
-                        System.out.println(input);
-                    }
-
-                    // Read any errors from the attempted command
-                    System.out.println("Here is the standard error of the command (if any):\n");
-                    String error = null;
-                    while ((error = stdError.readLine()) != null) {
-                        System.out.println(error);
-                    }
-
-                    int exitVal = proc.waitFor();
-                    System.out.println("Exited with: " + exitVal);
-                } catch (IOException ex){
-                    System.err.println(ex);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
                 }
-            } else{
-                ;
             }
+
+            for (var currentCommand : commandSet) {
+                try {
+                    if (currentCommand.conditionalOnFileExists() != null){
+                        var path = Path.of(currentDir, currentCommand.conditionalOnFileExists());
+                        if (Files.exists(path) == false){
+                            System.err.format("Skipped execution as the file: %s does not exist\n", path);
+                            continue;
+                        }
+                    }
+
+                    var result = executeCommand(currentDir, currentCommand.commandsToExecute(), "maven_build.txt");
+                    if (result != 0) {
+                        System.err.format("Error: %d while executing: %s", result, String.join(" ", currentCommand.commandsToExecute()));
+                    } else {
+                        System.out.println("Executed command: " + String.join(" ", currentCommand.commandsToExecute()));
+                    }
+                } catch (IOException e) {
+                    System.err.println(e);
+                } catch (InterruptedException e) {
+                    System.err.println(e);
+                }
+            }
+
         }
     }
 
     /**
      * @return a list of all directories containing pom.xml which have to be built
      */
-    public static List<String> getSubmissionDirectories(String basePath){
+    public static List<String> getSubmissionDirectories(String basePath) {
         List<String> pomFileDirectories = new ArrayList<>();
 
         try (Stream<Path> stream = Files.walk(Paths.get(basePath), Integer.MAX_VALUE)) {
@@ -118,20 +99,50 @@ public class Scanner {
     }
 
 
+    public static int executeCommand(String currentDirectory, String[] command, String outputFileName) throws IOError, InterruptedException, IOException {
+        ProcessBuilder pb = new ProcessBuilder();
+        pb.command(command);
+        pb.directory(new File(currentDirectory));
 
-    private static class StreamGobbler implements Runnable {
-        private InputStream inputStream;
-        private Consumer<String> consumer;
+        Process proc = pb.start();
 
-        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
-            this.inputStream = inputStream;
-            this.consumer = consumer;
+        BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+        BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+
+        BufferedWriter outputWriter = null;
+
+        if (outputFileName != null) {
+            var path = Path.of(currentDirectory, outputFileName);
+            outputWriter = new BufferedWriter(new FileWriter(path.toFile(), true));
         }
 
-        @Override
-        public void run() {
-            new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
+        // Read the output from the command
+        String input = null;
+        while ((input = stdInput.readLine()) != null) {
+            if (outputWriter != null) {
+                outputWriter.write(input);
+                outputWriter.newLine();
+            } else {
+                System.out.println(input);
+            }
         }
+
+        // Read any errors from the attempted command
+        String error = null;
+        while ((error = stdError.readLine()) != null) {
+            if (outputWriter != null) {
+                outputWriter.write(error);
+                outputWriter.newLine();
+            } else {
+                System.out.println(error);
+            }
+        }
+
+        if (outputWriter != null) {
+            outputWriter.flush();
+        }
+
+        return proc.waitFor();
     }
 }
 
