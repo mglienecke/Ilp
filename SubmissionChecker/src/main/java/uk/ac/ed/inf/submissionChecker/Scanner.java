@@ -1,5 +1,8 @@
 package uk.ac.ed.inf.submissionChecker;
 
+import com.google.gson.Gson;
+import uk.ac.ed.inf.submissionChecker.config.SubmissionCheckerConfig;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,23 +16,31 @@ public class Scanner {
     /**
      * pattern for the report file
      */
-    public static String ReportFileName = "report_%s.html";
-    public static String baseDirectory = ".";
-    public static String jarFileName = "target/PizzaDronz-1.0-SNAPSHOT.jar";
-    public static String configFileName;
+    // public static String ReportFileName = "report_%s.html";
+    public static String baseDirectory;
 
     public static void main(String[] args) {
         if (args.length < 2) {
             System.err.println("Scanner config_file base_directory ");
-            System.err.println("Example: Scanner runtasks.json d:\\IlpSubmissions");
+            System.err.println("Example: Scanner taskstorun.json d:\\IlpSubmissions");
             System.exit(1);
         }
 
-        configFileName = args[0];
+        var configFileName = args[0];
         if (Paths.get(configFileName).toFile().exists() == false){
             System.err.println("The file: " + configFileName + " does not exist");
             System.exit(2);
         }
+
+        SubmissionCheckerConfig runtimeConfiguration = null;
+        Gson config = new Gson();
+        try (Reader reader = new FileReader(configFileName)) {
+            runtimeConfiguration = config.fromJson(reader, SubmissionCheckerConfig.class);
+        } catch (IOException e) {
+            System.err.println("error loading the configuration: " + e);
+            System.exit(3);
+        }
+
 
         baseDirectory = args[1];
         if (Paths.get(baseDirectory).toFile().exists() == false){
@@ -65,7 +76,7 @@ public class Scanner {
             try {
                 // take the first entry in the path for the directory
                 var submissionDir = pomDir.getName(0);
-                submissionReportName = String.format(ReportFileName, submissionDir);
+                submissionReportName = String.format(runtimeConfiguration.submissionReportPattern, submissionDir);
                 reportWriter = new HtmlReportWriter(Path.of(baseDirectory, submissionReportName), "Submission Report for " + submissionDir, "reporttemplate.html");
             } catch (IOException e) {
                 System.err.println("error creating report file: " + submissionReportName);
