@@ -9,6 +9,7 @@
         <module>IlpRestServer</module>
         <module>IlpRestTest</module>
         <module>IlpFileDownloadSample</module>
+        <module>SubmissionChecker</module>
     </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>

@@ -1,4 +1,4 @@
-package uk.ac.ed.inf.submissionBuilder;
+package uk.ac.ed.inf.submissionChecker;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

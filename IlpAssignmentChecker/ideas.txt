@@ -8,7 +8,6 @@ mvn package -Dmaven.test.skip -f Chris\PizzaDronz\pom.xml > Chris\mavenresult.tx
 target\PizzaDronz-1.0-SNAPSHOT.jar
 
 
-- take start folder and JAR-name as parameters
-
-- write all reports to the start folder in a form report_xxxx.html
--
+- make everything a command which is configurable (JSON)
+- check for JAR as task
+- structural analysis as task

@@ -1,15 +1,11 @@
-package uk.ac.ed.inf.submissionBuilder;
+package uk.ac.ed.inf.submissionChecker;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Scanner {
@@ -18,19 +14,28 @@ public class Scanner {
      * pattern for the report file
      */
     public static String ReportFileName = "report_%s.html";
-
     public static String baseDirectory = ".";
     public static String jarFileName = "target/PizzaDronz-1.0-SNAPSHOT.jar";
+    public static String configFileName;
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.err.println("Scanner base_directory JAR-name(including relative path)");
-            System.err.println("Example: Scanner d:\\IlpSubmissions target/PizzaDronz-1.0-SNAPSHOT.jar");
+        if (args.length < 2) {
+            System.err.println("Scanner config_file base_directory ");
+            System.err.println("Example: Scanner runtasks.json d:\\IlpSubmissions");
             System.exit(1);
         }
 
-        baseDirectory = args[0];
-        jarFileName = args[1];
+        configFileName = args[0];
+        if (Paths.get(configFileName).toFile().exists() == false){
+            System.err.println("The file: " + configFileName + " does not exist");
+            System.exit(2);
+        }
+
+        baseDirectory = args[1];
+        if (Paths.get(baseDirectory).toFile().exists() == false){
+            System.err.println("The base directory: " + baseDirectory + " does not exist");
+            System.exit(3);
+        }
 
         List<Command> commandSet = new ArrayList<>();
 
