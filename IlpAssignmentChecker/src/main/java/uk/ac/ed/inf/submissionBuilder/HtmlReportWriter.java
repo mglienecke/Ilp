@@ -73,7 +73,7 @@ public class HtmlReportWriter {
     }
 
     public void appendSourceFile(String baseDirectory, Path file){
-        beginCodeSection(file.toString(), null);
+        beginCodeSection(file.toString(), "language-java");
         var javaFilePath = Path.of(baseDirectory, file.toString());
         try {
             var fileInput = new FileInputStream(javaFilePath.toFile());
