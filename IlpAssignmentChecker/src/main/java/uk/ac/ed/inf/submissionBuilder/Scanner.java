@@ -95,6 +95,9 @@ public class Scanner {
                 }
             }
 
+            reportWriter.appendJavaSourceFiles(currentDir, getJavaFilesInSubmissionDirectory(currentDir));
+
+            // write the final report
             try {
                 reportWriter.writeReport();
                 System.out.println("Report written to: " + reportWriter.getReportFileName());
@@ -121,6 +124,21 @@ public class Scanner {
         return pomFileDirectories;
     }
 
+    /**
+     * @return a list of all directories containing pom.xml which have to be built
+     */
+    public static List<Path> getJavaFilesInSubmissionDirectory(String basePath) {
+        List<Path> javaFiles = new ArrayList<>();
+
+        Path base = Paths.get(basePath);
+        try (Stream<Path> stream = Files.walk(base, Integer.MAX_VALUE)) {
+            javaFiles = stream.filter(e -> e.getFileName().toString().toLowerCase().endsWith(".java")).map(e -> base.relativize(e.normalize())).toList();
+        } catch (IOException ioEx) {
+            System.err.println(ioEx);
+        }
+
+        return javaFiles;
+    }
 
     public static int executeCommand(String currentDirectory, Command command, HtmlReportWriter reportWriter) throws IOError, InterruptedException, IOException {
 

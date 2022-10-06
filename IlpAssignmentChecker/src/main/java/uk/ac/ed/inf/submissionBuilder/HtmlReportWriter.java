@@ -3,6 +3,7 @@ package uk.ac.ed.inf.submissionBuilder;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
 
 public class HtmlReportWriter {
 
@@ -20,12 +21,20 @@ public class HtmlReportWriter {
         bodyContent.append(String.format("<h1>%s</h1>", title));
     }
 
-    public void beginSection(String sectionHeader, String sectionClassName) throws IOException {
+    public void beginSection(String sectionHeader, String sectionClassName) {
         bodyContent.append(String.format("<h3>%s</h3><div class='%s'>", sectionHeader, (sectionClassName != null ? sectionClassName : "")));
     }
 
-    public void endSection() throws IOException{
+    public void beginCodeSection(String sectionHeader, String sectionClassName) {
+        bodyContent.append(String.format("<h3>%s</h3><pre><code class='%s'>", sectionHeader, (sectionClassName != null ? sectionClassName : "")));
+    }
+
+    public void endSection() {
         bodyContent.append("</div>");
+    }
+
+    public void endCodeSection() {
+        bodyContent.append("</code></pre>");
     }
 
     // get a file from the resources folder
@@ -61,5 +70,37 @@ public class HtmlReportWriter {
 
     public Path getReportFileName() {
         return reportFileName;
+    }
+
+    public void appendSourceFile(String baseDirectory, Path file){
+        beginCodeSection(file.toString(), null);
+        var javaFilePath = Path.of(baseDirectory, file.toString());
+        try {
+            var fileInput = new FileInputStream(javaFilePath.toFile());
+            var fileContent = new String(fileInput.readAllBytes());
+            bodyContent.append(fileContent);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        endCodeSection();
+        bodyContent.append("<hr/>");
+    }
+
+    public void appendJavaSourceFiles(String baseDirectory, List<Path> javaFilesToList) {
+
+        bodyContent.append("<h3>list of submitted Java files</h3>");
+        bodyContent.append("<ul style='list-style-type: none'>");
+        for (var relativeJavaFile: javaFilesToList){
+            bodyContent.append(String.format("<li>%s</li>", relativeJavaFile));
+        }
+        bodyContent.append("</ul>");
+        bodyContent.append("<hr/>");
+
+        // now dump all Java files into the report
+        for (var relativeJavaFile: javaFilesToList){
+            appendSourceFile(baseDirectory, relativeJavaFile);
+        }
     }
 }
