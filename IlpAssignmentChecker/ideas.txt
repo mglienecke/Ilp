@@ -1,5 +1,4 @@
-dir /s /B *.pom
-cd ---
+
 mvn clean
 mvn package -Dmaven.test.skip
 
@@ -8,3 +7,8 @@ mvn package -Dmaven.test.skip -f Chris\PizzaDronz\pom.xml > Chris\mavenresult.tx
 
 target\PizzaDronz-1.0-SNAPSHOT.jar
 
+
+- take start folder and JAR-name as parameters
+
+- write all reports to the start folder in a form report_xxxx.html
+-
