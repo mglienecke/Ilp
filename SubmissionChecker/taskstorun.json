@@ -1,6 +1,16 @@
 {
-  "submissionReportPattern": "report_%s.html",
-  "commands": {
-
-  }
+  "submissionReportPattern": "%s_SubmissionReport.html",
+  "reportTemplateFile": "reporttemplate.html",
+  "commands": [
+    {
+      "type": "SystemCommandExecution",
+      "commandsToExecute": ["cmd.exe", "/c", "mvn clean"],
+      "reportHeader": "mvn clean"
+    },
+    {
+      "type": "SystemCommandExecution",
+      "commandsToExecute": ["cmd.exe", "/c", "mvn package -Dmaven.test.skip"],
+      "reportHeader": "mvn package w/o unit tests"
+    }
+  ]
 }

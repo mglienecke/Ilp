@@ -1,6 +1,7 @@
 package uk.ac.ed.inf.submissionChecker;
 
 import com.google.gson.Gson;
+import uk.ac.ed.inf.submissionChecker.commands.ISubmissionCheckerCommand;
 import uk.ac.ed.inf.submissionChecker.config.SubmissionCheckerConfig;
 
 import java.io.*;
@@ -18,6 +19,7 @@ public class Scanner {
      */
     // public static String ReportFileName = "report_%s.html";
     public static String baseDirectory;
+
 
     public static void main(String[] args) {
         if (args.length < 2) {
@@ -48,21 +50,15 @@ public class Scanner {
             System.exit(3);
         }
 
-        List<Command> commandSet = new ArrayList<>();
-
         if (System.getenv("JAVA_HOME") == null) {
             System.err.println("JAVA_HOME is undefined");
             System.exit(2);
         }
-        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-            commandSet.add(new Command(new String[]{"cmd.exe", "/c", "mvn clean"}, null, "mvn clean"));
-            commandSet.add(new Command(new String[]{"cmd.exe", "/c", "mvn package -Dmaven.test.skip"}, null, "mvn package w/o unit tests"));
-        } else {
-            commandSet.add(new Command(new String[]{"sh", "mvn", "clean"}, null, "mvn clean"));
-            commandSet.add(new Command(new String[]{"sh", "mvn", "package -Dmaven.test.skip"}, null, "mvn package w/o unit tests"));
-        }
+
+
 
         List<Path> pomFileDirectories = getSubmissionDirectories(baseDirectory);
+        List<ISubmissionCheckerCommand> commandList = List.of(runtimeConfiguration.commandsToExecute());
 
         // traverse all directories by clean and build the package -> then check for the JAR file
         for (Path pomDir : pomFileDirectories) {
@@ -71,13 +67,13 @@ public class Scanner {
             System.out.println("Processing: " + currentDir);
 
 
-            HtmlReportWriter reportWriter = null;
+            HtmlReportWriter reportWriter;
             String submissionReportName = null;
             try {
                 // take the first entry in the path for the directory
                 var submissionDir = pomDir.getName(0);
                 submissionReportName = String.format(runtimeConfiguration.submissionReportPattern, submissionDir);
-                reportWriter = new HtmlReportWriter(Path.of(baseDirectory, submissionReportName), "Submission Report for " + submissionDir, "reporttemplate.html");
+                reportWriter = new HtmlReportWriter(Path.of(baseDirectory, submissionReportName), "Submission Report for " + submissionDir, runtimeConfiguration.reportTemplateFile);
             } catch (IOException e) {
                 System.err.println("error creating report file: " + submissionReportName);
                 System.err.println(e);
@@ -86,27 +82,22 @@ public class Scanner {
 
             // remove the current report file
 
-            for (var currentCommand : commandSet) {
+            for (var currentCommand : commandList) {
                 try {
-                    if (currentCommand.conditionalOnFileExists() != null) {
-                        var path = Path.of(currentDir, currentCommand.conditionalOnFileExists());
-                        if (Files.exists(path) == false) {
-                            System.err.format("Skipped execution as the file: %s does not exist\n", path);
-                            continue;
-                        }
+                    if (currentCommand.checkForDependencies(currentDir) == false) {
+                        System.err.format("Skipped execution as (one of) the file(s): %s does not exist\n", String.join(", ", currentCommand.getDependencyFiles()));
+                        break;
                     }
 
-                    var result = executeCommand(currentDir, currentCommand, reportWriter);
+                    var result = currentCommand.execute(currentDir, reportWriter);
                     if (result != 0) {
-                        String error = String.format("Error: %d while executing: %s", result, String.join(" ", currentCommand.commandsToExecute()));
+                        String error = String.format("Error: %d while executing: %s", result, String.join(" ", currentCommand.getCommandsToExecute()));
                         System.err.println(error);
                         reportWriter.writeln(error);
                     } else {
-                        System.out.println("Executed command: " + String.join(" ", currentCommand.commandsToExecute()));
+                        System.out.println("Executed command: " + String.join(" ", currentCommand.getCommandsToExecute()));
                     }
-                } catch (IOException e) {
-                    System.err.println(e);
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     System.err.println(e);
                 }
             }
@@ -156,43 +147,7 @@ public class Scanner {
         return javaFiles;
     }
 
-    public static int executeCommand(String currentDirectory, Command command, HtmlReportWriter reportWriter) throws IOError, InterruptedException, IOException {
 
-        reportWriter.beginSection(command.reportHeader(), "commandOutput");
-
-        ProcessBuilder pb = new ProcessBuilder();
-        pb.command(command.commandsToExecute());
-        pb.directory(new File(currentDirectory));
-
-        Process proc = pb.start();
-
-        BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-        BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-
-        BufferedWriter outputWriter = null;
-
-        // Read the output from the command
-        String input = null;
-        while ((input = stdInput.readLine()) != null) {
-            if (reportWriter != null) {
-                reportWriter.writeln(input);
-            } else {
-                System.out.println(input);
-            }
-        }
-
-        // Read any errors from the attempted command
-        String error = null;
-        while ((error = stdError.readLine()) != null) {
-            if (reportWriter != null) {
-                reportWriter.writeln(error);
-            } else {
-                System.out.println(error);
-            }
-        }
-
-        return proc.waitFor();
-    }
 }
 
 
