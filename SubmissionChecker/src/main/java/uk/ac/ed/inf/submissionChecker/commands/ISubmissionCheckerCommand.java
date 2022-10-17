@@ -18,11 +18,17 @@ public interface ISubmissionCheckerCommand {
      * @param currentDirectory the current directory where execution is
      * @param reportWriter the reporting engine where output shall be written to
      */
-    int execute(String currentDirectory, HtmlReportWriter reportWriter) throws IOError, InterruptedException, IOException;
+    int execute(String currentDirectory, HtmlReportWriter reportWriter);
 
     boolean checkForDependencies(String currentDirectory);
 
     String[] getDependencyFiles();
 
     String[] getCommandsToExecute();
+
+    /**
+     * get a description of the command for displaying
+     * @return description
+     */
+    String getCommandDescription();
 }

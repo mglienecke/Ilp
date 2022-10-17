@@ -13,7 +13,7 @@ public class SystemCommand extends BaseCommand {
         super(CommandType.SystemCommandExecution, commandsToExecute, dependentOnFiles, reportHeader);
     }
 
-    public int execute(String currentDirectory, HtmlReportWriter reportWriter) throws IOError, InterruptedException, IOException {
+    public int execute(String currentDirectory, HtmlReportWriter reportWriter)  {
         // LINUX / macOS
         // new String[]{"sh", "mvn", "clean"}, null, "mvn clean"));
         // new String[]{"sh", "mvn", "package -Dmaven.test.skip"}, null, "mvn package w/o unit tests"));
@@ -24,31 +24,42 @@ public class SystemCommand extends BaseCommand {
         pb.command(getCommandsToExecute());
         pb.directory(new File(currentDirectory));
 
-        Process proc = pb.start();
+        Process proc = null;
+        try {
+            proc = pb.start();
 
-        BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-        BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
 
-        // Read the output from the command
-        String input;
-        while ((input = stdInput.readLine()) != null) {
-            if (reportWriter != null) {
-                reportWriter.writeln(input);
-            } else {
-                System.out.println(input);
+            // Read the output from the command
+            String input;
+            while ((input = stdInput.readLine()) != null) {
+                if (reportWriter != null) {
+                    reportWriter.writeln(input);
+                } else {
+                    System.out.println(input);
+                }
             }
-        }
 
-        // Read any errors from the attempted command
-        String error;
-        while ((error = stdError.readLine()) != null) {
-            if (reportWriter != null) {
-                reportWriter.writeln(error);
-            } else {
-                System.out.println(error);
+            // Read any errors from the attempted command
+            String error;
+            while ((error = stdError.readLine()) != null) {
+                if (reportWriter != null) {
+                    reportWriter.writeln(error);
+                } else {
+                    System.out.println(error);
+                }
             }
-        }
 
-        return proc.waitFor();
+            return proc.waitFor();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e){
+            throw new RuntimeException(e);
+        }
+        finally {
+            reportWriter.endSection();
+        }
     }
 }

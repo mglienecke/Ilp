@@ -34,6 +34,11 @@ public class SubmissionCheckerCommand {
     public String[] conditionalOnFilesExist;
 
     /**
+     * the JAR file for the Java execution check
+     */
+    @JsonProperty("jarFileName")
+    public String jarFileName;
+    /**
      * which class to execute
      */
     @JsonProperty("classToExecute")

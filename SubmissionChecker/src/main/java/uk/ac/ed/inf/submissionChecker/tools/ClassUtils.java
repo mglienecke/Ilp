@@ -1,4 +1,4 @@
-package uk.ac.ed.inf.ilpAssignmentChecker;
+package uk.ac.ed.inf.submissionChecker.tools;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -31,5 +31,4 @@ public class ClassUtils {
 
         return method;
     }
-
 }

@@ -41,7 +41,7 @@ public class SubmissionCheckerConfig {
             for (var command: commands) {
                 switch (command.commandType()){
                     case SystemCommandExecution -> commandList.add(new SystemCommand(command.commandsToExecute, command.conditionalOnFilesExist, command.reportHeader));
-                    case ClassExecution -> commandList.add(new ClassCommand(command.classToExecute, command.conditionalOnFilesExist));
+                    case ClassExecution -> commandList.add(new ClassCommand(command.classToExecute, command.conditionalOnFilesExist, command.jarFileName));
                 }
             }
         }

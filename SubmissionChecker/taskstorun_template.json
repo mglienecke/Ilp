@@ -1,0 +1,32 @@
+{
+  "submissionReportPattern": "%s_SubmissionReport.html",
+  "reportTemplateFile": "reporttemplate.html",
+  "commands": [
+    {
+      "type": "SystemCommandExecution",
+      "commandsToExecute": [
+        "cmd.exe",
+        "/c",
+        "mvn clean"
+      ],
+      "reportHeader": "mvn clean"
+    },
+    {
+      "type": "SystemCommandExecution",
+      "commandsToExecute": [
+        "cmd.exe",
+        "/c",
+        "mvn package -Dmaven.test.skip"
+      ],
+      "reportHeader": "mvn package w/o unit tests"
+    },
+    {
+      "type": "ClassExecution",
+      "conditionalOnFilesExist": [
+        "target/PizzaDronz-1.0-SNAPSHOT.jar"
+      ],
+      "jarFileName": "target/PizzaDronz-1.0-SNAPSHOT.jar",
+      "classToExecute": "uk.ac.ed.inf.ilpAssignmentOne.Checker"
+    }
+  ]
+}

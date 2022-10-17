@@ -12,8 +12,51 @@
     .commandOutput {
         font-family: monospace;
     }
+
+    #functionalTestResultsTable, th, td {
+        border: 1px solid black;
+
+    }
+
+
+    #functionalTestResultsTable td:nth-child(1){
+        width: 10pc;
+        font-weight: bold;
+    }
+
+    #functionalTestResultsTable td:nth-child(2){
+        width: 30pc;
+        font-weight: bold;
+    }
+
+    #functionalTestResultsTable td:nth-child(3){
+        width: 60pc;
+        font-weight: normal;
+        font-size: small;
+    }
+
+    .resultOk {
+        font-weight: bolder;
+        color: green;
+    }
+
+    .resultOk::after {
+        content: "OK";
+    }
+
+    .resultError{
+        font-weight: bolder;
+        color: red;
+    }
+    .resultError::after {
+        content: "ERR";
+    }
+
+
 </style>
 <body>
+<h2>$title</h2>
+$functionalTestResult
 $body
 </body>
 <script>hljs.highlightAll();</script>

@@ -74,4 +74,20 @@ public abstract class BaseCommand implements ISubmissionCheckerCommand {
     public String[] getDependencyFiles(){
         return dependentOnFiles;
     }
+
+    /**
+     * get a description for the command
+     * @return description
+     */
+    public String getCommandDescription(){
+        String description;
+
+        switch (commandType){
+            case ClassExecution -> description = String.format("class execution: %s", classToExecute);
+            case SystemCommandExecution -> description = String.format("command execution: %s", String.join(" ", commandsToExecute));
+            default -> throw new RuntimeException("there is a command type missing");
+        }
+
+        return description;
+    }
 }

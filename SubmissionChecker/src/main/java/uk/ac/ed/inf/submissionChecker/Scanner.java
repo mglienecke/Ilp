@@ -91,17 +91,18 @@ public class Scanner {
 
                     var result = currentCommand.execute(currentDir, reportWriter);
                     if (result != 0) {
-                        String error = String.format("Error: %d while executing: %s", result, String.join(" ", currentCommand.getCommandsToExecute()));
+                        String error = String.format("Error: %d while executing: %s", result, currentCommand.getCommandDescription());
                         System.err.println(error);
                         reportWriter.writeln(error);
                     } else {
-                        System.out.println("Executed command: " + String.join(" ", currentCommand.getCommandsToExecute()));
+                        System.out.println("Executed : " + currentCommand.getCommandDescription());
                     }
                 } catch (Exception e) {
                     System.err.println(e);
                 }
             }
 
+            reportWriter.generateFunctionalTestResultsTable();
             reportWriter.appendJavaSourceFiles(currentDir, getJavaFilesInSubmissionDirectory(currentDir));
 
             // write the final report
