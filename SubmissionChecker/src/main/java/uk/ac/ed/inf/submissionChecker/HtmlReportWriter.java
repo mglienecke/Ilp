@@ -53,8 +53,8 @@ public class HtmlReportWriter {
 
         result.append("<div><h3>Functional test results:</h3><table id='functionalTestResultsTable'>");
         for (var testResult : functionalTestResults) {
-            result.append(String.format("<tr><td class='%s'></td><td>%s</td><td>%s</td></tr>",
-                    testResult.success ? "resultOk" : "resultError", testResult.title, testResult.message));
+            result.append(String.format("<tr class='%s'><td class='%s'></td><td>%s</td><td>%s</td></tr>",
+                    testResult.isWarning() ? "resultWarning" : "", testResult.success ? "resultOk" : "resultError", testResult.title, testResult.message));
         }
         result.append("</table></div");
         return result.toString();

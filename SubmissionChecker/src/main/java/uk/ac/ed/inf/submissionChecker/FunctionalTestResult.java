@@ -43,6 +43,16 @@ public class FunctionalTestResult {
 
     boolean success;
 
+    public boolean isWarning() {
+        return warning;
+    }
+
+    public void setWarning(boolean warning) {
+        this.warning = warning;
+    }
+
+    boolean warning;
+
     FunctionalTestResult(String title, String message, boolean success) {
         this.title = title;
         this.message = message;

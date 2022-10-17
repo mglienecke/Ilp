@@ -75,7 +75,6 @@ public class JarLoader {
 
     /**
      * check if a class is present in the loaded classes by checking for the name
-     * @param classArrayList the list of loaded classes
      * @param className the classname to check for
      * @return the loaded class definition or null
      */
