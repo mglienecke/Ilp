@@ -10,6 +10,7 @@ import uk.ac.ed.inf.submissionChecker.tools.JarLoader;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,7 +22,7 @@ public class Checker extends ClassExecutionBase {
     public final double AppletonLat = 55.944494;
 
     public final double TestLng = -3;
-    public final double TestLat = 55.81;
+    public final double TestLat = 51;
 
     public final String LngLatClassName = "uk.ac.ed.inf.LngLat";
     public final String RestaurantClassName = "uk.ac.ed.inf.Restaurant";
@@ -513,18 +514,29 @@ public class Checker extends ClassExecutionBase {
      * @param reportWriter
      * @return
      */
-    private boolean testInCentralArea(Class loadedClass, HtmlReportWriter reportWriter) {
-        try {
-            // TODO: Implement
-            var newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(AppletonLng, AppletonLat);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+    private void testInCentralArea(Class loadedClass, HtmlReportWriter reportWriter) {
+        generalTestForCondition((FunctionalTestResult currentTest) -> {
 
-        return true;
+            var newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(AppletonLng, AppletonLat);
+            var centralAreaMethod = loadedClass.getMethod("inCentralArea");
+            var centralAreaResult = (boolean) centralAreaMethod.invoke(newInstance);
+
+            if (centralAreaResult == false){
+                currentTest.appendMessage("Appleton Tower not (!) in central area");
+                currentTest.setWarning(true);
+            } else {
+                currentTest.appendMessage("Appleton Tower correctly checked as central");
+            }
+
+            newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(TestLng, TestLat);
+            centralAreaResult = (boolean) centralAreaMethod.invoke(newInstance);
+            if (centralAreaResult){
+                currentTest.appendMessage("FAR FAR AWAY  in (!) central area");
+                currentTest.setWarning(true);
+            } else {
+                currentTest.appendMessage("FAR FAR AWAY correctly checked as not in central area");
+            }
+            return true;
+        }, reportWriter, "LngLat.inCentralArea() checks", "");
     }
 }
