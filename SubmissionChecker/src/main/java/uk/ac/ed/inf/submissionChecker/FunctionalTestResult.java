@@ -20,7 +20,7 @@ public class FunctionalTestResult {
     }
 
     public void setMessage(String message) {
-        this.message = message;
+        appendMessage(message);
     }
 
     public void appendMessage(String appendExtraMessage){
@@ -31,6 +31,16 @@ public class FunctionalTestResult {
             message += "<br/>";
         }
         message += appendExtraMessage;
+    }
+
+    public void appendCodeBlockMessage(String codeBlock, String cssCodeBase){
+        if (message == null){
+            message = new String();
+        }
+        if (message.isEmpty() == false){
+            message += "<br/>";
+        }
+        message += String.format("<pre><code class='%s'>%s</code></pre>", cssCodeBase, codeBlock);
     }
 
     public boolean isSuccess() {

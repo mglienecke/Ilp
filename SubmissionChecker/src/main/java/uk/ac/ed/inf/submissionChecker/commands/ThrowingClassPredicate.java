@@ -1,7 +1,8 @@
 package uk.ac.ed.inf.submissionChecker.commands;
+
 import uk.ac.ed.inf.submissionChecker.FunctionalTestResult;
 
 @FunctionalInterface
-public interface ThrowingPredicate<T>  {
-    boolean test(FunctionalTestResult currentTest) throws Exception;
+public interface ThrowingClassPredicate<T>  {
+    boolean test(T t, FunctionalTestResult currentTest) throws Exception;
 }
