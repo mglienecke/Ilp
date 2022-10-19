@@ -70,7 +70,9 @@ public class SystemCommand extends BaseCommand {
             throw new RuntimeException(e);
         }
         finally {
-            reportWriter.endSection();
+            if (reportWriter != null){
+                reportWriter.endSection();
+            }
         }
     }
 }

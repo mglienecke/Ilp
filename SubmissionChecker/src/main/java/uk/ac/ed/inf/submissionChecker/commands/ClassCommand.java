@@ -54,12 +54,15 @@ public class ClassCommand extends BaseCommand {
         try {
             var jarAbsolute = Paths.get(currentDirectory, jarFileName).toAbsolutePath().toString();
             var loader = new JarLoader(jarAbsolute);
-            reportWriter.beginSection(getReportHeader(), "");
+            // reportWriter.beginSection(getReportHeader(), "");
             System.out.println(String.format("Analysis of JAR-file: %s", jarAbsolute));
             var result = testClass.checkImplementation(loader, reportWriter);
             System.out.println("success: " + result);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+        finally {
+            // reportWriter.endSection();
         }
         return 0;
     }

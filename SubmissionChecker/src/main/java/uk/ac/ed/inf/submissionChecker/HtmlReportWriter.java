@@ -30,9 +30,7 @@ public class HtmlReportWriter {
      * @return the created test result object so it can be changed afterwards
      */
     public FunctionalTestResult addFunctionalTestResult(String title, String message, boolean success) {
-        var result = new FunctionalTestResult(title, message, success);
-        functionalTestResults.add(result);
-        return result;
+        return addFunctionalTestResult(new FunctionalTestResult(title, message, success));
     }
 
     /**
@@ -56,7 +54,7 @@ public class HtmlReportWriter {
             result.append(String.format("<tr class='%s'><td class='%s'></td><td>%s</td><td>%s</td></tr>",
                     testResult.isWarning() ? "resultWarning" : "", testResult.success ? "resultOk" : "resultError", testResult.title, testResult.message));
         }
-        result.append("</table></div");
+        result.append("</table></div>");
         return result.toString();
     }
 
@@ -75,11 +73,11 @@ public class HtmlReportWriter {
     }
 
     public void beginSection(String sectionHeader, String sectionClassName) {
-        bodyContent.append(String.format("<h3>%s</h3><div class='%s'>", sectionHeader, (sectionClassName != null ? sectionClassName : "")));
+        bodyContent.append(String.format("<div class='%s'><h3>%s</h3>", (sectionClassName != null ? sectionClassName : ""), sectionHeader));
     }
 
     public void beginCodeSection(String sectionHeader, String sectionClassName) {
-        bodyContent.append(String.format("<h3>%s</h3><pre><code class='%s'>", sectionHeader, (sectionClassName != null ? sectionClassName : "")));
+        bodyContent.append(String.format("<div><h3>%s</h3></div><pre><code class='%s'>", sectionHeader, (sectionClassName != null ? sectionClassName : "")));
     }
 
     public void endSection() {
