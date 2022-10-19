@@ -2,33 +2,24 @@ package uk.ac.ed.inf.ilpAssignmentOne;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tomcat.util.bcel.Const;
 import uk.ac.ed.inf.submissionChecker.FunctionalTestResult;
 import uk.ac.ed.inf.submissionChecker.HtmlReportWriter;
-import uk.ac.ed.inf.submissionChecker.commands.ClassExecutionBase;
+import uk.ac.ed.inf.submissionChecker.commands.ClassExecutionImplementationBase;
 import uk.ac.ed.inf.submissionChecker.tools.ClassUtils;
 import uk.ac.ed.inf.submissionChecker.tools.JarLoader;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.ed.inf.ilpAssignmentOne.Constants;
 
-public class Checker extends ClassExecutionBase {
-
-    public final double MoveDistance = 0.00015;
-    public final double AppletonLng = -3.186874;
-    public final double AppletonLat = 55.944494;
-
-    public final double TestLng = -3;
-    public final double TestLat = 51;
-
-    public final String LngLatClassName = "uk.ac.ed.inf.LngLat";
-    public final String RestaurantClassName = "uk.ac.ed.inf.Restaurant";
-    public final String MenuClassName = "uk.ac.ed.inf.Menu";
-    public final String OrderClassName = "uk.ac.ed.inf.Order";
-
+/**
+ * perform a runtime analysis for CW1 using reflection. All required methods and implementations are checked (except the enum where a warning is issued as this has to be done manually)
+ */
+public class Checker extends ClassExecutionImplementationBase {
     /**
      * A method that returns the pythagorean distance from this LngLat object to the inputted LngLat
      *
@@ -57,12 +48,12 @@ public class Checker extends ClassExecutionBase {
             try {
                 Class loadedLngLatClass = null;
 
-                boolean lngLatClassPresent = testForClassExistence(jarFileLoader, reportWriter, LngLatClassName);
-                boolean orderClassPresent = testForClassExistence(jarFileLoader, reportWriter, OrderClassName);
-                boolean restaurantClassPresent = testForClassExistence(jarFileLoader, reportWriter, RestaurantClassName);
-                testForClassExistence(jarFileLoader, reportWriter, MenuClassName);
+                boolean lngLatClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.LngLatClassName);
+                boolean orderClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.OrderClassName);
+                boolean restaurantClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.RestaurantClassName);
+                testForClassExistence(jarFileLoader, reportWriter, Constants.MenuClassName);
 
-                loadedLngLatClass = jarFileLoader.getClass(LngLatClassName);
+                loadedLngLatClass = jarFileLoader.getClass(Constants.LngLatClassName);
                 if (loadedLngLatClass == null) {
                     break;
                 }
@@ -174,8 +165,8 @@ public class Checker extends ClassExecutionBase {
             currentTest.appendMessage("double distanceTo(LngLat distanceObject) defined");
 
             if (canConstructorBeUsed) {
-                var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(AppletonLng, AppletonLat);
-                var newInstance2 = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(TestLng, TestLat);
+                var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
+                var newInstance2 = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.TestLng, Constants.TestLat);
 
                 boolean success = true;
 
@@ -187,7 +178,7 @@ public class Checker extends ClassExecutionBase {
                 currentTest.appendMessage("distanceTo() for same LngLat delivered 0 (correct)");
 
                 distance = (double) method.invoke(newInstance, newInstance2);
-                var compDistance = distanceTo(AppletonLng, TestLng, AppletonLat, TestLat);
+                var compDistance = distanceTo(Constants.AppletonLng, Constants.TestLng, Constants.AppletonLat, Constants.TestLat);
                 if (distance != compDistance) {
                     currentTest.appendMessage(String.format("was expecting %f as distance - got %f", compDistance, distance));
                     success = false;
@@ -218,8 +209,8 @@ public class Checker extends ClassExecutionBase {
             currentTest.appendMessage("double closeTo(LngLat distanceObject) present");
 
             if (canConstructorBeUsed) {
-                var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(AppletonLng, AppletonLat);
-                var newInstance2 = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(TestLng, TestLat);
+                var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
+                var newInstance2 = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.TestLng, Constants.TestLat);
 
                 boolean success = true;
 
@@ -280,25 +271,25 @@ public class Checker extends ClassExecutionBase {
 
             if (singleParam.getClass().equals(double.class)) {
                 if (canConstructorBeUsed) {
-                    var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(AppletonLng, AppletonLat);
+                    var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
 
                     boolean success = true;
 
                     // HOVER test
                     var posAfterMove = method.get().invoke(newInstance, null);
-                    if (getFieldValueFromLngLat(posAfterMove, "lat") != AppletonLat) {
+                    if (getFieldValueFromLngLat(posAfterMove, "lat") != Constants.AppletonLat) {
                         currentTest.appendMessage("Lat after hover (null) is not correct");
                     }
 
-                    if (getFieldValueFromLngLat(posAfterMove, "lng") != AppletonLng) {
+                    if (getFieldValueFromLngLat(posAfterMove, "lng") != Constants.AppletonLng) {
                         currentTest.appendMessage("Lng after hover (null) is not correct");
                     }
                     currentTest.appendMessage("nextPosition() with hover correct");
 
                     // NORTH test
                     posAfterMove = method.get().invoke(newInstance, 90);
-                    double nextLng = AppletonLng + MoveDistance * Math.cos(90);
-                    double nextLat = AppletonLat + MoveDistance * Math.sin(90);
+                    double nextLng = Constants.AppletonLng + Constants.MoveDistance * Math.cos(90);
+                    double nextLat = Constants.AppletonLat + Constants.MoveDistance * Math.sin(90);
 
                     if (getFieldValueFromLngLat(posAfterMove, "lat") != nextLat) {
                         currentTest.appendMessage("Lat after North (90 deg) is not correct");
@@ -345,8 +336,8 @@ public class Checker extends ClassExecutionBase {
 
         // perform the general checks
         generalTestForCondition((FunctionalTestResult currentTest) -> {
-            loadedOrderClass.set(jar.getClass(OrderClassName));
-            currentTest.appendMessage(OrderClassName + " class loaded");
+            loadedOrderClass.set(jar.getClass(Constants.OrderClassName));
+            currentTest.appendMessage(Constants.OrderClassName + " class loaded");
             return true;
         }, reportWriter, "Order class structural checks", "");
 
@@ -379,8 +370,8 @@ public class Checker extends ClassExecutionBase {
                 }
                 currentTest.appendMessage("getDeliveryCost() takes 2 parameters");
 
-                if (params[0].getType().isArray() == false || params[0].getType().getComponentType().getTypeName().equals(RestaurantClassName) == false) {
-                    currentTest.setMessage("param 0 is either no array, or not of type: " + RestaurantClassName);
+                if (params[0].getType().isArray() == false || params[0].getType().getComponentType().getTypeName().equals(Constants.RestaurantClassName) == false) {
+                    currentTest.setMessage("param 0 is either no array, or not of type: " + Constants.RestaurantClassName);
                     break;
                 }
                 currentTest.appendMessage("getDeliveryCost() 1st parameter is Restaurant[]");
@@ -391,7 +382,7 @@ public class Checker extends ClassExecutionBase {
                 }
                 currentTest.appendMessage("getDeliveryCost() 2nd parameter is varargs String");
 
-                var loadedRestaurantClass = jar.getClass(RestaurantClassName);
+                var loadedRestaurantClass = jar.getClass(Constants.RestaurantClassName);
                 var getRestaurantsMethod = Arrays.stream(loadedRestaurantClass.getMethods()).filter(m -> m.getName().equals("getRestaurantsFromRestServer")).findFirst();
                 var restaurantResult = getRestaurantsMethod.get().invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net"));
                 currentTest.appendMessage("instantiated Restaurant and loaded the Restaurant[]");
@@ -441,7 +432,7 @@ public class Checker extends ClassExecutionBase {
         // perform the general checks
         generalTestForCondition((FunctionalTestResult currentTest) -> {
 
-            loadedRestaurantClass.set(jar.getClass(RestaurantClassName));
+            loadedRestaurantClass.set(jar.getClass(Constants.RestaurantClassName));
             currentTest.appendMessage("Restaurant class loaded");
             return true;
         }, reportWriter, "Restaurant / Menu existence checks", "check class existence and load classes");
@@ -517,7 +508,7 @@ public class Checker extends ClassExecutionBase {
     private void testInCentralArea(Class loadedClass, HtmlReportWriter reportWriter) {
         generalTestForCondition((FunctionalTestResult currentTest) -> {
 
-            var newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(AppletonLng, AppletonLat);
+            var newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
             var centralAreaMethod = loadedClass.getMethod("inCentralArea");
             var centralAreaResult = (boolean) centralAreaMethod.invoke(newInstance);
 
@@ -528,7 +519,7 @@ public class Checker extends ClassExecutionBase {
                 currentTest.appendMessage("Appleton Tower correctly checked as central");
             }
 
-            newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(TestLng, TestLat);
+            newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(Constants.TestLng, Constants.TestLat);
             centralAreaResult = (boolean) centralAreaMethod.invoke(newInstance);
             if (centralAreaResult){
                 currentTest.appendMessage("FAR FAR AWAY  in (!) central area");

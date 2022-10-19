@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * the main entry point for the submission checker to scan directories for submissions and then execute the necessary commands
+ */
 public class Scanner {
 
     /**
@@ -21,6 +24,10 @@ public class Scanner {
     public static String baseDirectory;
 
 
+    /**
+     * launching the scanner using the config file and a base directory
+     * @param args
+     */
     public static void main(String[] args) {
         if (args.length < 2) {
             System.err.println("Scanner config_file base_directory ");
@@ -34,6 +41,9 @@ public class Scanner {
             System.exit(2);
         }
 
+        /**
+         * load the runtime configuration from JSON
+         */
         SubmissionCheckerConfig runtimeConfiguration = null;
         Gson config = new Gson();
         try (Reader reader = new FileReader(configFileName)) {
@@ -55,18 +65,19 @@ public class Scanner {
             System.exit(2);
         }
 
-
-
+        /**
+         * traverse all sub-directories below the base directory and search for pom.xml files for the solution
+         */
         List<Path> pomFileDirectories = getSubmissionDirectories(baseDirectory);
         List<ISubmissionCheckerCommand> commandList = List.of(runtimeConfiguration.commandsToExecute());
 
-        // traverse all directories by clean and build the package -> then check for the JAR file
+        /**
+         * traverse all directories and execute the commands in the configuration. Usually this would be clean and build the package -> then check for the JAR file (class command)
+         */
         for (Path pomDir : pomFileDirectories) {
 
             String currentDir = Paths.get(baseDirectory).resolve(pomDir).toAbsolutePath().toString();
             System.out.println("Processing: " + currentDir);
-
-
             HtmlReportWriter reportWriter;
             String submissionReportName = null;
             try {
@@ -80,8 +91,9 @@ public class Scanner {
                 continue;
             }
 
-            // remove the current report file
-
+            /**
+             * traverse the commands and write to the file
+             */
             for (var currentCommand : commandList) {
                 try {
                     if (currentCommand.checkForDependencies(currentDir) == false) {
@@ -102,6 +114,9 @@ public class Scanner {
                 }
             }
 
+            /**
+             * generate the functional tests table (will be on top) and add the submitted JAVA files (easier reading)
+             */
             reportWriter.generateFunctionalTestResultsTable();
             reportWriter.appendJavaSourceFiles(currentDir, getJavaFilesInSubmissionDirectory(currentDir));
 

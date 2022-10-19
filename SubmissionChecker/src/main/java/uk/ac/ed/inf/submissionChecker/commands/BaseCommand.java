@@ -3,6 +3,9 @@ package uk.ac.ed.inf.submissionChecker.commands;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * abstract implementation for a command to check submissions
+ */
 public abstract class BaseCommand implements ISubmissionCheckerCommand {
 
     private String classToExecute;
@@ -34,12 +37,27 @@ public abstract class BaseCommand implements ISubmissionCheckerCommand {
     }
 
 
-    protected BaseCommand(CommandType commandType, String classToExecute, String[] dependentOnFiles) {
+    /**
+     * a class shall be executed
+     * @param commandType
+     * @param classToExecute is the class to be executed (has to be of type IClassExecutionImplementation)
+     * @param dependentOnFiles describes any files which have to be present (i.e. a JAR, etc.)
+     * @param reportHeader which report header to show
+     */
+    protected BaseCommand(CommandType commandType, String classToExecute, String[] dependentOnFiles, String reportHeader) {
         this.commandType = commandType;
         this.classToExecute = classToExecute;
         this.dependentOnFiles = dependentOnFiles;
+        this.reportHeader = reportHeader;
     }
 
+    /**
+     * a shell script shall be executed
+     * @param commandType
+     * @param commandsToExecute a set of command - depending on the target OS this will be concatenated accordingly
+     * @param dependentOnFiles describes any files which have to be present (i.e. a JAR, etc.)
+     * @param reportHeader which report header to show
+     */
     protected BaseCommand(CommandType commandType, String[] commandsToExecute, String[] dependentOnFiles, String reportHeader){
         this.commandType = commandType;
         this.commandsToExecute = commandsToExecute.clone();

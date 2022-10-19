@@ -4,20 +4,31 @@ import uk.ac.ed.inf.submissionChecker.HtmlReportWriter;
 
 import java.io.*;
 
+/**
+ * a simple shell command to execute (either bash / sh or CMD)
+ */
 public class SystemCommand extends BaseCommand {
     public CommandType getCommandType() {
         return CommandType.SystemCommandExecution;
     }
 
+    /**
+     * create the command including the shell command as such (so no sh or cmd.exe)
+     * @param commandsToExecute would describe the command parameters. I.e. cmd /c mvn clean for a Maven build under Windows or sh mvn clean for macOS / Linux
+     * @param dependentOnFiles any files the command is dependent upon
+     * @param reportHeader the header to show
+     */
     public SystemCommand (String[] commandsToExecute, String[] dependentOnFiles, String reportHeader) {
         super(CommandType.SystemCommandExecution, commandsToExecute, dependentOnFiles, reportHeader);
     }
 
+    /**
+     * create the actual command for a ProcessBuilder and execute it. All stdin and stderr is captured and written to the HtmlReportWriter
+     * @param currentDirectory the current directory where execution is
+     * @param reportWriter the reporting engine where output shall be written to
+     * @return the exit code of the command
+     */
     public int execute(String currentDirectory, HtmlReportWriter reportWriter)  {
-        // LINUX / macOS
-        // new String[]{"sh", "mvn", "clean"}, null, "mvn clean"));
-        // new String[]{"sh", "mvn", "package -Dmaven.test.skip"}, null, "mvn package w/o unit tests"));
-
         reportWriter.beginSection(getReportHeader(), "commandOutput");
 
         ProcessBuilder pb = new ProcessBuilder();

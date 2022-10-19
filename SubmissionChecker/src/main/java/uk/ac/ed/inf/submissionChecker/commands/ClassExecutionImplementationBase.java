@@ -3,7 +3,10 @@ package uk.ac.ed.inf.submissionChecker.commands;
 import uk.ac.ed.inf.submissionChecker.FunctionalTestResult;
 import uk.ac.ed.inf.submissionChecker.HtmlReportWriter;
 
-public abstract class ClassExecutionBase implements IClassExecutionImplementation {
+/**
+ * abstract class to be used as a base class (common methods) for class commands
+ */
+public abstract class ClassExecutionImplementationBase implements IClassExecutionImplementation {
     /**
      * perform a test on a class using a lambda
      * @param c the class to test
@@ -36,7 +39,7 @@ public abstract class ClassExecutionBase implements IClassExecutionImplementatio
      * @return a functional test result for further manipulation
      * @param <C> the class this is for
      */
-    public static <C> FunctionalTestResult generalTestForCondition(ThrowingPredicate<C> predicate, HtmlReportWriter reportWriter, String title, String message) {
+    public static FunctionalTestResult generalTestForCondition(ThrowingPredicate predicate, HtmlReportWriter reportWriter, String title, String message) {
         var result = reportWriter.addFunctionalTestResult(title, message, false);
         try {
             if (predicate.test(result)) {
