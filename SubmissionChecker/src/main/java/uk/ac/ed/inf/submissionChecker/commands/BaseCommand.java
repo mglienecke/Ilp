@@ -2,6 +2,7 @@ package uk.ac.ed.inf.submissionChecker.commands;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 /**
  * abstract implementation for a command to check submissions
@@ -15,6 +16,8 @@ public abstract class BaseCommand implements ISubmissionCheckerCommand {
 
     private final CommandType commandType;
     private String[] commandsToExecute;
+
+    private ArrayList<String> errorsDuringExecution = new ArrayList<>();
 
     public String getReportHeader() {
         return reportHeader;
@@ -36,6 +39,19 @@ public abstract class BaseCommand implements ISubmissionCheckerCommand {
         return classToExecute;
     }
 
+    /**
+     * add a new error to the list
+     * @param error
+     */
+    public void addError(String error) {
+        errorsDuringExecution.add(error);
+    }
+
+    /**
+     * get all errors which occurred during execution
+     * @return an arraylist of the errors
+     */
+    public ArrayList<String> getErrorsDuringExecution() { return errorsDuringExecution; }
 
     /**
      * a class shall be executed

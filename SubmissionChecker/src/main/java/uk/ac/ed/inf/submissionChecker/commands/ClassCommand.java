@@ -53,7 +53,7 @@ public class ClassCommand extends BaseCommand {
 
         try {
             var jarAbsolute = Paths.get(currentDirectory, jarFileName).toAbsolutePath().toString();
-            var loader = new JarLoader(jarAbsolute);
+            var loader = new JarLoader(jarAbsolute, "uk/ac/ed");
             // reportWriter.beginSection(getReportHeader(), "");
             System.out.println(String.format("Analysis of JAR-file: %s", jarAbsolute));
             var result = testClass.checkImplementation(loader, reportWriter);

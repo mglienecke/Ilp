@@ -51,10 +51,12 @@ public class HtmlReportWriter {
 
         result.append("<div><h3>Functional test results:</h3><table id='functionalTestResultsTable'>");
         for (var testResult : functionalTestResults) {
-            result.append(String.format("<tr class='%s'><td class='%s'></td><td>%s</td><td>%s</td></tr>",
-                    testResult.isWarning() ? "resultWarning" : "", testResult.success ? "resultOk" : "resultError", testResult.title, testResult.message));
+            result.append(String.format("<tr class='%s'><td class='%s'></td><td>%.1f</td><td>%s</td><td>%s</td></tr>",
+                    testResult.isWarning() ? "resultWarning" : "", testResult.success ? "resultOk" : "resultError", testResult.getPointsAchieved(), testResult.title, testResult.message));
         }
-        result.append("</table></div>");
+        result.append("</table>");
+        result.append(String.format("<h3>Total points achieved: %.1f </h3>", functionalTestResults.stream().map(r -> r.getPointsAchieved()).reduce(Float::sum)));
+        result.append("</div>");
         return result.toString();
     }
 

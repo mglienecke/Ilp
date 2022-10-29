@@ -48,10 +48,10 @@ public class Checker extends ClassExecutionImplementationBase {
             try {
                 Class loadedLngLatClass = null;
 
-                boolean lngLatClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.LngLatClassName);
-                boolean orderClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.OrderClassName);
-                boolean restaurantClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.RestaurantClassName);
-                testForClassExistence(jarFileLoader, reportWriter, Constants.MenuClassName);
+                boolean lngLatClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.LngLatClassName, 0.5f);
+                boolean orderClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.OrderClassName, 0.5f);
+                boolean restaurantClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.RestaurantClassName, 0.5f);
+                testForClassExistence(jarFileLoader, reportWriter, Constants.MenuClassName, 0.5f);
 
                 loadedLngLatClass = jarFileLoader.getClass(Constants.LngLatClassName);
                 if (loadedLngLatClass == null) {
@@ -111,11 +111,12 @@ public class Checker extends ClassExecutionImplementationBase {
      * @param className
      * @return
      */
-    private boolean testForClassExistence(JarLoader jar, HtmlReportWriter reportWriter, String className) {
+    private boolean testForClassExistence(JarLoader jar, HtmlReportWriter reportWriter, String className, float pointsToAward) {
         var testResult = reportWriter.addFunctionalTestResult(className, "", false);
         var loadedClass = jar.getClass(className);
         testResult.setSuccess(loadedClass != null);
         testResult.setMessage(String.format("class: %s is %s existent", className, (testResult.isSuccess() ? "" : "NOT")));
+        testResult.addPoints(testResult.isSuccess() ? pointsToAward : 0);
         return testResult.isSuccess();
     }
 
@@ -146,7 +147,7 @@ public class Checker extends ClassExecutionImplementationBase {
             }
 
             return method != null;
-        }, reportWriter, "check for inCentralArea() signature", "");
+        }, reportWriter, "check for inCentralArea()", "");
     }
 
     private void checkDistanceTo(Class loadedClass, HtmlReportWriter reportWriter, boolean canConstructorBeUsed) {

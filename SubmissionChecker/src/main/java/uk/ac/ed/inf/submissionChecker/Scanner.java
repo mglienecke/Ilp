@@ -5,11 +5,15 @@ import uk.ac.ed.inf.submissionChecker.commands.ISubmissionCheckerCommand;
 import uk.ac.ed.inf.submissionChecker.config.SubmissionCheckerConfig;
 
 import java.io.*;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -28,7 +32,7 @@ public class Scanner {
      * launching the scanner using the config file and a base directory
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length < 2) {
             System.err.println("Scanner config_file base_directory ");
             System.err.println("Example: Scanner taskstorun.json d:\\IlpSubmissions");
@@ -69,6 +73,47 @@ public class Scanner {
          * traverse all sub-directories below the base directory and search for pom.xml files for the solution
          */
         List<Path> pomFileDirectories = getSubmissionDirectories(baseDirectory);
+
+        /**
+         * Some checking
+         *
+         * First write all directories which have no pom.xml -> there is no proper solution
+         * Then write all directories where several entries are present
+         *
+         * Both will be removed afterwards
+         */
+        var submissionDirectories = Files.list(Paths.get(baseDirectory)).filter(d -> Files.isDirectory(d.toAbsolutePath())).map(e -> e.getParent().relativize(e)).toList();
+        Map<Path, List<Path>> solutionsInBaseDirectoryMap = pomFileDirectories.stream().map(e -> e).collect(Collectors.groupingBy(Path::normalize));
+
+        // needed as stream processing with lambdas requires the object to be final
+        var testDirectories = pomFileDirectories.stream().toList();
+        var directoriesWithoutSolution = submissionDirectories
+                .stream()
+                .filter(d -> testDirectories
+                        .stream()
+                        .anyMatch(pd -> pd.toString().contains(d.toString())) == false)
+                .toList();
+
+        for (Path directoryWithoutSolution : directoriesWithoutSolution) {
+            System.err.println("ERR >>> " + directoryWithoutSolution.toString() + " has no pom.xml - entries are not processed");
+        }
+
+        var directoriesWithSeveralSolutions = pomFileDirectories.stream()
+                // this prevents null entries further down if the pom.xml is directly below the root
+                .map(p -> p.getParent() != null ? p.getParent() : p)
+                .collect(Collectors.groupingBy(e -> e.toString()))
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().size() > 1)
+                .map(e -> e.getKey())
+                .toList();
+
+        for (var entry : directoriesWithSeveralSolutions) {
+            System.err.println("ERR >>> " + entry + " has several pom.xml (solutions) - entries are not processed");
+            pomFileDirectories = pomFileDirectories.stream().filter(d -> d.toString().contains(entry) == false).toList();
+        }
+
+
         List<ISubmissionCheckerCommand> commandList = List.of(runtimeConfiguration.commandsToExecute());
 
         /**
@@ -103,7 +148,7 @@ public class Scanner {
 
                     var result = currentCommand.execute(currentDir, reportWriter);
                     if (result != 0) {
-                        String error = String.format("Error: %d while executing: %s", result, currentCommand.getCommandDescription());
+                        String error = String.format("ERR %d for %s >>> while executing: %s", result, currentDir, currentCommand.getCommandDescription());
                         System.err.println(error);
                         reportWriter.writeln(error);
                     } else {
@@ -139,13 +184,17 @@ public class Scanner {
         Path base = Paths.get(basePath);
         try (Stream<Path> stream = Files.walk(base, Integer.MAX_VALUE)) {
             // create the relative path between the base path and the found path -> this is the way to the sub-directory
-            pomFileDirectories = stream.filter(e -> e.getFileName().toString().equalsIgnoreCase("pom.xml")).map(e -> base.relativize(e.getParent().normalize())).toList();
+            // the maven compiler plugin is rather nasty with 105 pom.xml so we ignore it
+            pomFileDirectories = stream
+                    .filter(e -> e.getFileName().toString().equalsIgnoreCase("pom.xml") && (e.toString().contains("maven-compiler-plugin") == false))
+                    .map(e -> base.relativize(e.getParent().normalize())).toList();
         } catch (IOException ioEx) {
             System.err.println(ioEx);
         }
 
         return pomFileDirectories;
     }
+
 
     /**
      * @return a list of all directories containing pom.xml which have to be built

@@ -58,8 +58,10 @@ public class SystemCommand extends BaseCommand {
                 if (reportWriter != null) {
                     reportWriter.writeln(error);
                 } else {
-                    System.out.println(error);
+                    System.out.println("ERR >>> " + error);
                 }
+
+                addError(error);
             }
 
             return proc.waitFor();

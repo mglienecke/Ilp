@@ -7,6 +7,8 @@ public class FunctionalTestResult {
     String title;
     String message;
 
+    float pointsAchieved;
+
     public String getTitle() {
         return title;
     }
@@ -21,6 +23,14 @@ public class FunctionalTestResult {
 
     public void setMessage(String message) {
         appendMessage(message);
+    }
+
+    public void addPoints(float pointsToAdd){
+        pointsAchieved += pointsToAdd;
+    }
+
+    public float getPointsAchieved(){
+        return pointsAchieved;
     }
 
     public void appendMessage(String appendExtraMessage){

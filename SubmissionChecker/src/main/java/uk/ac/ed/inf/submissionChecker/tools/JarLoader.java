@@ -17,8 +17,8 @@ public class JarLoader {
 
     private ArrayList<Class> classesInJar  = new ArrayList<>();
 
-    public JarLoader(String jarFileName) throws Exception {
-        ArrayList<String> classNames = getClassNamesFromJar(jarFileName);
+    public JarLoader(String jarFileName, String patternToMatch) throws Exception {
+        ArrayList<String> classNames = getClassNamesFromJar(jarFileName, patternToMatch);
         File f = new File(jarFileName);
 
         URLClassLoader classLoader = new URLClassLoader(new URL[]{f.toURI().toURL()});
@@ -32,10 +32,9 @@ public class JarLoader {
     }
 
     // Returns an arraylist of class names in a JarInputStream
-    public ArrayList<String> getClassNamesFromJar(JarInputStream jarFile) throws Exception {
+    public ArrayList<String> getClassNamesFromJar(JarInputStream jarFile, String patternToMatch) throws Exception {
         ArrayList<String> classNames = new ArrayList<>();
         try {
-            //JarInputStream jarFile = new JarInputStream(jarFileStream);
             JarEntry jar;
 
             //Iterate through the contents of the jar file
@@ -45,7 +44,7 @@ public class JarLoader {
                     break;
                 }
                 //Pick file that has the extension of .class
-                if ((jar.getName().endsWith(".class"))) {
+                if ((jar.getName().endsWith(".class") && jar.getName().contains(patternToMatch))) {
                     String className = jar.getName().replaceAll("/", "\\.");
                     String myClass = className.substring(0, className.lastIndexOf('.'));
                     classNames.add(myClass);
@@ -59,8 +58,8 @@ public class JarLoader {
 
     // Returns an arraylist of class names in a JarInputStream
     // Calls the above function by converting the jar path to a stream
-    public ArrayList<String> getClassNamesFromJar(String jarPath) throws Exception {
-        return getClassNamesFromJar(new JarInputStream(new FileInputStream(jarPath)));
+    public ArrayList<String> getClassNamesFromJar(String jarPath, String patternToMatch) throws Exception {
+        return getClassNamesFromJar(new JarInputStream(new FileInputStream(jarPath)), patternToMatch);
     }
 
 

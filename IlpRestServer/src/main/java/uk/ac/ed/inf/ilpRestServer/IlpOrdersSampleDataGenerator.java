@@ -5,6 +5,7 @@ import net.andreinc.mockneat.MockNeat;
 import uk.ac.ed.inf.ilpData.Order;
 import uk.ac.ed.inf.ilpData.OrderOutcome;
 import uk.ac.ed.inf.ilpData.OrderWithOutcome;
+import uk.ac.ed.inf.ilpData.Restaurant;
 import uk.ac.ed.inf.ilpRestServer.controller.IlpRestService;
 
 import java.io.*;
@@ -18,6 +19,34 @@ import static net.andreinc.mockneat.types.enums.CreditCardType.*;
  * a sample order data generator (JSON-format)
  */
 public class IlpOrdersSampleDataGenerator {
+
+    private static int restaurantIndex = 0;
+
+    public static OrderWithOutcome CreateSampleOrder(LocalDate currentDate, OrderOutcome outcome, MockNeat mock, Restaurant[] restaurants){
+        var order = new OrderWithOutcome();
+        order.orderNo = String.format("%08X", ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE));
+        order.orderDate = String.format("%04d-%02d-%02d", currentDate.getYear(), currentDate.getMonthValue(), currentDate.getDayOfMonth());
+        order.cvv = mock.cvvs().get();
+        order.creditCardNumber = mock.creditCards().types(VISA_16, MASTERCARD).get();
+        order.customer = mock.names().get();
+        order.creditCardExpiry = String.format("%02d/%02d", ThreadLocalRandom.current().nextInt(1, 12), ThreadLocalRandom.current().nextInt(24, 29));
+
+        // every order has the defined outcome
+        order.orderOutcome = outcome;
+
+        // get a random restaurant
+        var currentRestaurant = restaurants[restaurantIndex++];
+        if (restaurantIndex >= restaurants.length){
+            restaurantIndex = 0;
+        }
+
+        // and load the order items plus the price
+        order.orderItems = Arrays.stream(currentRestaurant.menu).map(m -> m.name).toArray(String[]::new);
+        order.priceTotalInPence = Arrays.stream(currentRestaurant.menu).map(m -> m.priceInPence).reduce(0, Integer::sum) + Order.OrderChargeInPence;
+
+        return order;
+    }
+
 
     public static void main(String[] args) throws IOException {
         System.out.println("ILP sample order data generator");
@@ -40,34 +69,18 @@ public class IlpOrdersSampleDataGenerator {
         while (currentDate.isBefore(LocalDate.of(2023, 5, 31))) {
 
             // traverse over all possible order outcomes to generate one record for each outcome possible
-            for (var outcome : OrderOutcome.values()){
+            for (var outcome : OrderOutcome.values()) {
 
                 // create a valid order with default values
-                var order = new OrderWithOutcome();
-                order.orderNo = String.format("%08X", ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE));
-                order.orderDate = String.format("%04d-%02d-%02d", currentDate.getYear(), currentDate.getMonthValue(), currentDate.getDayOfMonth());
-                order.cvv = mock.cvvs().get();
-                order.creditCardNumber = mock.creditCards().types(VISA_16, MASTERCARD).get();
-                order.customer = mock.names().get();
-                order.creditCardExpiry = String.format("%02d/%02d", ThreadLocalRandom.current().nextInt(1, 12), ThreadLocalRandom.current().nextInt(24, 28));
-
-                // every order has the defined outcome
-                order.orderOutcome = outcome;
-
-                // get a random restaurant
-                var currentRestaurant = restaurants[ThreadLocalRandom.current().nextInt(0, restaurants.length-1)];
-
-                // and load the order items plus the price
-                order.orderItems = Arrays.stream(currentRestaurant.menu).map(m -> m.name).toArray(String[]::new);
-                order.priceTotalInPence = Arrays.stream(currentRestaurant.menu).map(m -> m.priceInPence).reduce(0, Integer::sum) + Order.OrderChargeInPence;
+                var order = CreateSampleOrder(currentDate, outcome, mock, restaurants);
 
                 // now modify the wrong entries according to the enum
-                switch (outcome){
+                switch (outcome) {
                     case InvalidCvv -> {
                         var len = Integer.toString(ThreadLocalRandom.current().nextInt(1, 8));
 
                         // 3 digit CVV would be valid
-                        if (len.equals("3")){
+                        if (len.equals("3")) {
                             len = "4";
                         }
 
@@ -82,7 +95,7 @@ public class IlpOrdersSampleDataGenerator {
                     case InvalidTotal -> {
                         // by adding something to the order this invalidates the total -> just make sure it is not 0 (which would be correct again)
                         var add = ThreadLocalRandom.current().nextInt(-100, 1000);
-                        if (add == 0){
+                        if (add == 0) {
                             add = 1;
                         }
                         order.priceTotalInPence += add;
@@ -116,8 +129,13 @@ public class IlpOrdersSampleDataGenerator {
                     }
 
                     case InvalidPizzaCombinationMultipleSuppliers -> {
-                        // mix pizzas from a different supplier
-                        currentRestaurant = restaurants[ThreadLocalRandom.current().nextInt(0, restaurants.length-1)];
+                        // mix pizzas from a different supplier. Find the restaurant the order is from, then take the next
+                        var currentRestaurant = Arrays.stream(restaurants).filter(r -> r.menu[0].name.equals(order.orderItems[0])).findFirst().get();
+                        if (restaurants[0].equals(currentRestaurant)){
+                            currentRestaurant = restaurants[1];
+                        } else {
+                            currentRestaurant = restaurants[0];
+                        }
 
                         ArrayList<String> items = new ArrayList<>();
                         items.addAll(Arrays.stream(order.orderItems).toList());
@@ -126,14 +144,16 @@ public class IlpOrdersSampleDataGenerator {
                         order.priceTotalInPence += currentRestaurant.menu[0].priceInPence;
                     }
 
-                    case ValidButNotDelivered -> {
+                 /**
+                  * Will be handled later
+                  case ValidButNotDelivered -> {
                         order.orderOutcome = OrderOutcome.Delivered;
                     }
 
                     case Delivered -> {
                         ;
                     }
-
+                */
                     default -> {
                         continue;
                     }
@@ -146,8 +166,20 @@ public class IlpOrdersSampleDataGenerator {
             currentDate = currentDate.plusDays(1);
         }
 
+        currentDate = startDate;
+        while (currentDate.isBefore(LocalDate.of(2023, 5, 31))) {
+            for (int orderCount = 0; orderCount < 40; orderCount ++){
+                // create a valid order with default values
+                orderList.add(CreateSampleOrder(currentDate, OrderOutcome.Delivered, mock, restaurants));
+            }
 
-        var writer = new BufferedWriter(new FileWriter("orders.json"));
+            // find another date
+            currentDate = currentDate.plusDays(1);
+        }
+
+
+
+            var writer = new BufferedWriter(new FileWriter("orders.json"));
         writer.write(new Gson().toJson(orderList.toArray()));
         writer.flush();
     }

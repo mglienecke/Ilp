@@ -4,6 +4,7 @@ import uk.ac.ed.inf.submissionChecker.HtmlReportWriter;
 
 import java.io.IOError;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public interface ISubmissionCheckerCommand {
     /**
@@ -31,4 +32,15 @@ public interface ISubmissionCheckerCommand {
      * @return description
      */
     String getCommandDescription();
+
+    /**
+     * get all errors which happened
+     * @return a list of errors
+     */
+    ArrayList<String> getErrorsDuringExecution();
+
+    /**
+     * add the error
+     */
+    void addError(String error);
 }
