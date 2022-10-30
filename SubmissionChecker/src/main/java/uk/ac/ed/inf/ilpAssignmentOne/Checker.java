@@ -11,15 +11,30 @@ import uk.ac.ed.inf.submissionChecker.tools.JarLoader;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+
 import uk.ac.ed.inf.ilpAssignmentOne.Constants;
 
 /**
  * perform a runtime analysis for CW1 using reflection. All required methods and implementations are checked (except the enum where a warning is issued as this has to be done manually)
  */
 public class Checker extends ClassExecutionImplementationBase {
+
+    public final String TestGroupLngLat = "LngLat checks";
+    public final String TestGroupRestaurantOrder = "Restaurant Order checks";
+    public final String TestGroupInCentralAreaImpl = "nCentralArea() implementation";
+    public final String TestGroupDistanceToImpl = "distanceTo() implementation";
+
+    public final String TestGroupCloseToImpl = "closeTo() implementation";
+    public final String TestGroupNextPositionImpl = "nextPosition() implementation";
+    public final String TestGroupGetRestaurantsImpl = "getRestaurantsFromRestServer() implementation";
+    public final String TestGroupGetDeliveryCostImpl = "getDeliveryCost() implementation";
+
     /**
      * A method that returns the pythagorean distance from this LngLat object to the inputted LngLat
      *
@@ -48,10 +63,10 @@ public class Checker extends ClassExecutionImplementationBase {
             try {
                 Class loadedLngLatClass = null;
 
-                boolean lngLatClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.LngLatClassName, 0.5f);
-                boolean orderClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.OrderClassName, 0.5f);
-                boolean restaurantClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.RestaurantClassName, 0.5f);
-                testForClassExistence(jarFileLoader, reportWriter, Constants.MenuClassName, 0.5f);
+                boolean lngLatClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.LngLatClassName, TestGroupLngLat, new HtmlReportWriter.TestResultInPoints("LngLat class / record", 0.5f, HtmlReportWriter.TestResultType.Success));
+                boolean orderClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.OrderClassName, TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("Order class", 0.5f, HtmlReportWriter.TestResultType.Success));
+                boolean restaurantClassPresent = testForClassExistence(jarFileLoader, reportWriter, Constants.RestaurantClassName, TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("Restaurant class", 0.25f, HtmlReportWriter.TestResultType.Success));
+                testForClassExistence(jarFileLoader, reportWriter, Constants.MenuClassName, TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("Menu class", 0.25f, HtmlReportWriter.TestResultType.Success));
 
                 loadedLngLatClass = jarFileLoader.getClass(Constants.LngLatClassName);
                 if (loadedLngLatClass == null) {
@@ -63,8 +78,9 @@ public class Checker extends ClassExecutionImplementationBase {
                 // test the constructor (is needed later on as well)
                 var constructorTest = testClassForCondition(loadedLngLatClass, (Class x, FunctionalTestResult currentTest) -> {
                     var constructor = ClassUtils.getConstructor(x, new Class[]{double.class, double.class});
-                    if (constructor != null){
+                    if (constructor != null) {
                         currentTest.appendMessage("LngLat(double, double) present");
+                        reportWriter.addTestResultInPoints(TestGroupLngLat, new HtmlReportWriter.TestResultInPoints("LngLat constructor", 0.5f, HtmlReportWriter.TestResultType.Success));
                     }
 
                     return constructor != null;
@@ -82,12 +98,12 @@ public class Checker extends ClassExecutionImplementationBase {
                     reportWriter.addFunctionalTestResult("inCentralArea", "no check possible as no suitable class constructor can be found", false);
                 }
 
-                if (restaurantClassPresent){
+                if (restaurantClassPresent) {
                     checkRestaurant(jarFileLoader, reportWriter);
                 } else {
                     reportWriter.addFunctionalTestResult("Restaurant tests", "no tests possible as no Restaurant class is defined", false);
                 }
-                if (orderClassPresent){
+                if (orderClassPresent) {
                     checkOrder(jarFileLoader, reportWriter);
                 } else {
                     reportWriter.addFunctionalTestResult("Order tests", "no tests possible as no Order class is defined", false);
@@ -111,43 +127,45 @@ public class Checker extends ClassExecutionImplementationBase {
      * @param className
      * @return
      */
-    private boolean testForClassExistence(JarLoader jar, HtmlReportWriter reportWriter, String className, float pointsToAward) {
+    private boolean testForClassExistence(JarLoader jar, HtmlReportWriter reportWriter, String className, String testGroup, HtmlReportWriter.TestResultInPoints resultInPoints) {
         var testResult = reportWriter.addFunctionalTestResult(className, "", false);
         var loadedClass = jar.getClass(className);
         testResult.setSuccess(loadedClass != null);
         testResult.setMessage(String.format("class: %s is %s existent", className, (testResult.isSuccess() ? "" : "NOT")));
-        testResult.addPoints(testResult.isSuccess() ? pointsToAward : 0);
+        reportWriter.addTestResultInPoints(testGroup, testResult.isSuccess() ? resultInPoints : new HtmlReportWriter.TestResultInPoints(resultInPoints.test(), 0f, HtmlReportWriter.TestResultType.Error));
         return testResult.isSuccess();
     }
 
     private void checkLngLatClassStructure(Class loadedClass, HtmlReportWriter reportWriter) {
-        testClassForCondition(loadedClass, (Class x, FunctionalTestResult currentTest) -> {
+        var test = testClassForCondition(loadedClass, (Class x, FunctionalTestResult currentTest) -> {
             var field = (x.isRecord() ? x.getDeclaredField("lng") : x.getField("lng"));
 
             if (field != null) {
                 currentTest.appendMessage("lng field present");
             }
-
             return field != null;
         }, reportWriter, "check for lng field (public)", "");
+        reportWriter.addTestResultInPoints(TestGroupLngLat, new HtmlReportWriter.TestResultInPoints("lng field", test.isSuccess() ? 0.25f : 0f, test.isSuccess() ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
 
-        testClassForCondition(loadedClass, (Class x, FunctionalTestResult currentTest) -> {
+
+        test = testClassForCondition(loadedClass, (Class x, FunctionalTestResult currentTest) -> {
             var field = (x.isRecord() ? x.getDeclaredField("lat") : x.getField("lat"));
             if (field != null) {
                 currentTest.appendMessage("lat field present");
             }
-
             return field != null;
         }, reportWriter, "check for lat field (public)", "");
+        reportWriter.addTestResultInPoints(TestGroupLngLat, new HtmlReportWriter.TestResultInPoints("lat field", test.isSuccess() ? 0.25f : 0f, test.isSuccess() ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
 
-        testClassForCondition(loadedClass, (Class x, FunctionalTestResult currentTest) -> {
+        test = testClassForCondition(loadedClass, (Class x, FunctionalTestResult currentTest) -> {
             var method = ClassUtils.getMethodWithReturnType(x, "inCentralArea", null, boolean.class);
-            if (method != null){
+            if (method != null) {
                 currentTest.appendMessage("boolean inCentralArea() present");
             }
-
             return method != null;
         }, reportWriter, "check for inCentralArea()", "");
+        reportWriter.addTestResultInPoints(TestGroupLngLat, new HtmlReportWriter.TestResultInPoints("inCentralArea()", test.isSuccess() ? 0.5f : 0f, test.isSuccess() ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
     }
 
     private void checkDistanceTo(Class loadedClass, HtmlReportWriter reportWriter, boolean canConstructorBeUsed) {
@@ -164,6 +182,7 @@ public class Checker extends ClassExecutionImplementationBase {
                 return false;
             }
             currentTest.appendMessage("double distanceTo(LngLat distanceObject) defined");
+            reportWriter.addTestResultInPoints(TestGroupDistanceToImpl, new HtmlReportWriter.TestResultInPoints("double distanceTo(LngLat distanceObject) defined", 0.5f, HtmlReportWriter.TestResultType.Success));
 
             if (canConstructorBeUsed) {
                 var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
@@ -176,7 +195,13 @@ public class Checker extends ClassExecutionImplementationBase {
                     currentTest.appendMessage("distance with self-comparison should be 0");
                     success = false;
                 }
-                currentTest.appendMessage("distanceTo() for same LngLat delivered 0 (correct)");
+
+                if (success) {
+                    currentTest.appendMessage("distanceTo() for same LngLat delivered 0 (correct)");
+                } else {
+                    currentTest.setWarning(true);
+                }
+
 
                 distance = (double) method.invoke(newInstance, newInstance2);
                 var compDistance = distanceTo(Constants.AppletonLng, Constants.TestLng, Constants.AppletonLat, Constants.TestLat);
@@ -184,8 +209,14 @@ public class Checker extends ClassExecutionImplementationBase {
                     currentTest.appendMessage(String.format("was expecting %f as distance - got %f", compDistance, distance));
                     success = false;
                 }
-                currentTest.appendMessage("distanceTo() delivered correct value");
 
+                if (success) {
+                    currentTest.appendMessage("distanceTo() delivered correct value");
+                } else {
+                    currentTest.setWarning(true);
+                }
+
+                reportWriter.addTestResultInPoints(TestGroupDistanceToImpl, new HtmlReportWriter.TestResultInPoints("implementation", success ? 0.5f : 0f, success ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
                 currentTest.setSuccess(success);
             } else {
                 currentTest.appendMessage("dynamic tests not run as no constructor was present");
@@ -208,6 +239,7 @@ public class Checker extends ClassExecutionImplementationBase {
                 return false;
             }
             currentTest.appendMessage("double closeTo(LngLat distanceObject) present");
+            reportWriter.addTestResultInPoints(TestGroupCloseToImpl, new HtmlReportWriter.TestResultInPoints("double closeTo(LngLat distanceObject) present", 0.5f, HtmlReportWriter.TestResultType.Success));
 
             if (canConstructorBeUsed) {
                 var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
@@ -220,15 +252,26 @@ public class Checker extends ClassExecutionImplementationBase {
                     currentTest.appendMessage("closeTo() for the same LngLat should be close");
                     success = false;
                 }
-                currentTest.appendMessage("closeTo() for same LngLat is close (correct)");
+
+                if (success) {
+                    currentTest.appendMessage("closeTo() for same LngLat is close (correct)");
+                } else {
+                    currentTest.setWarning(true);
+                }
 
                 isClose = (boolean) method.invoke(newInstance, newInstance2);
                 if (isClose) {
                     currentTest.appendMessage("closeTo() does not check for the proper distance which is larger than 0.00015");
                     success = false;
                 }
-                currentTest.appendMessage("closeTo() for remote LngLat is not close (correct)");
 
+                if (success) {
+                    currentTest.appendMessage("closeTo() for remote LngLat is not close (correct)");
+                } else {
+                    currentTest.setWarning(true);
+                }
+
+                reportWriter.addTestResultInPoints(TestGroupCloseToImpl, new HtmlReportWriter.TestResultInPoints("implementation", success ? 0.5f : 0f, success ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
                 currentTest.setSuccess(success);
             } else {
                 currentTest.appendMessage("dynamic tests not run as no constructor was present");
@@ -243,74 +286,114 @@ public class Checker extends ClassExecutionImplementationBase {
             /**
              * this call is different to the others as nextPosition can be in 2 different ways. Either with double, or with enum for the direction
              */
-            var method = Arrays.stream(x.getMethods()).filter(m -> m.getName().equals("nextPosition")).findFirst();
-            if (method.isPresent() == false) {
-                currentTest.setMessage("no method nextPosition() (either with enum or double)  defined");
-                return false;
-            }
-            currentTest.appendMessage("nextPosition() is present");
+            var success = false;
+            Parameter singleParam = null;
+            Optional<Method> method;
 
-            if (method.get().getReturnType().getClass().equals(loadedClass.getClass()) == false) {
-                currentTest.setMessage("nextPosition() does not return LngLat");
-                return false;
-            }
-            currentTest.appendMessage("LngLat nextPosition() is present");
+            do {
+                method = Arrays.stream(x.getMethods()).filter(m -> m.getName().equals("nextPosition")).findFirst();
+                if (method.isPresent() == false) {
+                    currentTest.setMessage("no method nextPosition() (either with enum or double)  defined");
+                    break;
+                }
+                currentTest.appendMessage("nextPosition() is present");
 
-            var params = method.get().getParameters();
-            if (Arrays.stream(params).count() != 1) {
-                currentTest.setMessage("no method nextPosition() (either with enum or double - just a single parameter)  defined");
-                return false;
-            }
-            currentTest.appendMessage("nextPosition() takes 1 parameter");
+                if (method.get().getReturnType().getClass().equals(loadedClass.getClass()) == false) {
+                    currentTest.setMessage("nextPosition() does not return LngLat");
+                    break;
+                }
+                currentTest.appendMessage("LngLat nextPosition() is present");
 
-            var singleParam = Arrays.stream(params).findFirst().get();
-            if (singleParam.getClass().equals(double.class) == false && singleParam.getType().isEnum() == false) {
-                currentTest.setMessage("no method nextPosition() (either with enum or double)  defined. A single param is present, but not of the proper kind");
-                return false;
-            }
-            currentTest.appendMessage("nextPosition() takes 1 parameter which is either enum or double");
+                var params = method.get().getParameters();
+                if (Arrays.stream(params).count() != 1) {
+                    currentTest.setMessage("no method nextPosition() (either with enum or double - just a single parameter)  defined");
+                    break;
+                }
+                currentTest.appendMessage("nextPosition() takes 1 parameter");
 
-            if (singleParam.getClass().equals(double.class)) {
+                singleParam = Arrays.stream(params).findFirst().get();
+                if (singleParam.getType().equals(double.class) == false && singleParam.getType().isEnum() == false) {
+                    currentTest.setMessage("no method nextPosition() (either with enum or double)  defined. A single param is present, but not of the proper kind");
+                    break;
+                }
+                currentTest.appendMessage("nextPosition() takes 1 parameter which is either enum or double");
+                success = true;
+            } while (false);
+
+            reportWriter.addTestResultInPoints(TestGroupNextPositionImpl, new HtmlReportWriter.TestResultInPoints("nextPosition(double / enum) present", success ? 0.5f : 0f, success ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
+            if (singleParam != null && singleParam.getType().equals(double.class)) {
                 if (canConstructorBeUsed) {
                     var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
 
-                    boolean success = true;
+                    var test1Success = false;
+                    var test2Success = false;
 
-                    // HOVER test
-                    var posAfterMove = method.get().invoke(newInstance, null);
-                    if (getFieldValueFromLngLat(posAfterMove, "lat") != Constants.AppletonLat) {
-                        currentTest.appendMessage("Lat after hover (null) is not correct");
+                    try {
+                        do {
+                            // HOVER test
+                            var posAfterMove = method.get().invoke(newInstance, null);
+                            if (getFieldValueFromLngLat(posAfterMove, "lat") != Constants.AppletonLat) {
+                                currentTest.appendMessage("Lat after hover (null) is not correct");
+                                break;
+                            }
+
+                            if (getFieldValueFromLngLat(posAfterMove, "lng") != Constants.AppletonLng) {
+                                currentTest.appendMessage("Lng after hover (null) is not correct");
+                                break;
+                            }
+
+                            test1Success = true;
+
+                            posAfterMove = method.get().invoke(newInstance, 90);
+                            double nextLng = Constants.AppletonLng + Constants.MoveDistance * Math.cos(90);
+                            double nextLat = Constants.AppletonLat + Constants.MoveDistance * Math.sin(90);
+
+                            if (getFieldValueFromLngLat(posAfterMove, "lat") != nextLat) {
+                                currentTest.appendMessage("Lat after North (90 deg) is not correct");
+                                break;
+                            }
+                            if (getFieldValueFromLngLat(posAfterMove, "lng") != nextLng) {
+                                currentTest.appendMessage("Lng after North (90 deg) is not correct");
+                                break;
+                            }
+
+                            test2Success = true;
+
+                        } while(false);
+                    } catch (Exception moveNextEx){
+                        currentTest.appendMessage("nextPosition() test - exception: " + moveNextEx.getMessage());
                     }
 
-                    if (getFieldValueFromLngLat(posAfterMove, "lng") != Constants.AppletonLng) {
-                        currentTest.appendMessage("Lng after hover (null) is not correct");
+                    if (test1Success) {
+                        currentTest.appendMessage("nextPosition() with hover correct");
+                    } else {
+                        currentTest.setWarning(true);
                     }
-                    currentTest.appendMessage("nextPosition() with hover correct");
-
-                    // NORTH test
-                    posAfterMove = method.get().invoke(newInstance, 90);
-                    double nextLng = Constants.AppletonLng + Constants.MoveDistance * Math.cos(90);
-                    double nextLat = Constants.AppletonLat + Constants.MoveDistance * Math.sin(90);
-
-                    if (getFieldValueFromLngLat(posAfterMove, "lat") != nextLat) {
-                        currentTest.appendMessage("Lat after North (90 deg) is not correct");
+                    if (test2Success) {
+                        currentTest.appendMessage("nextPosition() with North(90 deg) correct");
+                    } else {
+                        currentTest.setWarning(true);
                     }
-                    if (getFieldValueFromLngLat(posAfterMove, "lng") != nextLng) {
-                        currentTest.appendMessage("Lng after North (90 deg) is not correct");
-                    }
-                    currentTest.appendMessage("nextPosition() with North(90 deg) correct");
 
-                    currentTest.setSuccess(success);
+                    reportWriter.addTestResultInPoints(TestGroupNextPositionImpl, new HtmlReportWriter.TestResultInPoints("hover check", test1Success ? 0.75f : 0f, test1Success ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+                    reportWriter.addTestResultInPoints(TestGroupNextPositionImpl, new HtmlReportWriter.TestResultInPoints("North(90 deg) check", test2Success ? 0.75f : 0f, test2Success ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
+                    currentTest.setSuccess(test1Success && test2Success);
                 } else {
                     currentTest.appendMessage("dynamic tests not run as no usable constructor was present");
                 }
             } else {
-                currentTest.appendMessage("WARNING: manual test needed as an enum is passed in");
-                currentTest.setWarning(true);
+                if (singleParam != null) {
+                    currentTest.appendMessage("WARNING: manual test needed as an enum is passed in");
+                    currentTest.setWarning(true);
+                }
+
+                reportWriter.addTestResultInPoints(TestGroupNextPositionImpl, new HtmlReportWriter.TestResultInPoints("CHECK with enum manually!", 0f, singleParam != null ? HtmlReportWriter.TestResultType.Warning : HtmlReportWriter.TestResultType.Error));
             }
 
             return true;
-        }, reportWriter, "distanceTo() checks (structure + semantics)", "");
+        }, reportWriter, "nextPosition() checks (structure + semantics)", "");
     }
 
     private double getFieldValueFromLngLat(Object obj, String fieldName) {
@@ -347,77 +430,124 @@ public class Checker extends ClassExecutionImplementationBase {
             return false;
         }
 
+        reportWriter.addTestResultInPoints(TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("Order object present", 0.5f, HtmlReportWriter.TestResultType.Success));
+
         testClassForCondition(loadedOrderClass.get(), (Class x, FunctionalTestResult currentTest) -> {
             var result = false;
 
             do {
                 var method = Arrays.stream(x.getMethods()).filter(m -> m.getName().equals("getDeliveryCost")).findFirst();
-                if (method.isPresent() == false) {
-                    currentTest.setMessage("no method getDeliveryCost() defined");
-                    break;
-                }
-                currentTest.appendMessage("getDeliveryCost() existent");
 
-                if (method.get().getReturnType().equals(int.class) == false) {
-                    currentTest.setMessage("getDeliveryCost() does not return int");
-                    break;
-                }
-                currentTest.appendMessage("getDeliveryCost() returns int");
+                do {
+                    if (method.isPresent() == false) {
+                        currentTest.setMessage("no method getDeliveryCost() defined");
+                        break;
+                    }
+                    currentTest.appendMessage("getDeliveryCost() existent");
 
-                var params = method.get().getParameters();
-                if (params.length < 2) {
-                    currentTest.setMessage("getDeliveryCost() - not enough parameter present");
-                    break;
-                }
-                currentTest.appendMessage("getDeliveryCost() takes 2 parameters");
 
-                if (params[0].getType().isArray() == false || params[0].getType().getComponentType().getTypeName().equals(Constants.RestaurantClassName) == false) {
-                    currentTest.setMessage("param 0 is either no array, or not of type: " + Constants.RestaurantClassName);
-                    break;
-                }
-                currentTest.appendMessage("getDeliveryCost() 1st parameter is Restaurant[]");
+                    if (method.get().getReturnType().equals(int.class) == false) {
+                        currentTest.setMessage("getDeliveryCost() does not return int");
+                        break;
+                    }
+                    currentTest.appendMessage("getDeliveryCost() returns int");
 
-                if (params[1].isVarArgs() == false || params[1].getType().getComponentType().equals(String.class) == false) {
-                    currentTest.setMessage("param 1 is either no varargs, or not of type String...");
+                    var params = method.get().getParameters();
+                    if (params.length < 2) {
+                        currentTest.setMessage("getDeliveryCost() - not enough parameter present");
+                        break;
+                    }
+                    currentTest.appendMessage("getDeliveryCost() takes 2 parameters");
+
+                    if (params[0].getType().isArray() == false || params[0].getType().getComponentType().getTypeName().equals(Constants.RestaurantClassName) == false) {
+                        currentTest.setMessage("param 0 is either no array, or not of type: " + Constants.RestaurantClassName);
+                        break;
+                    }
+                    currentTest.appendMessage("getDeliveryCost() 1st parameter is Restaurant[]");
+
+                    if (params[1].isVarArgs() == false || params[1].getType().getComponentType().equals(String.class) == false) {
+                        currentTest.setMessage("param 1 is either no varargs, or not of type String...");
+                        break;
+                    }
+
+                    result = true;
+                } while (false);
+
+                reportWriter.addTestResultInPoints(TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("int getDeliveryCost(Restaurant[], String...) present", result ? 0.5f : 0f, result ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+                if (result) {
+                    currentTest.appendMessage("getDeliveryCost() 2nd parameter is varargs String");
+                } else {
+                    // no further checks from here
                     break;
                 }
-                currentTest.appendMessage("getDeliveryCost() 2nd parameter is varargs String");
 
                 var loadedRestaurantClass = jar.getClass(Constants.RestaurantClassName);
-                var getRestaurantsMethod = Arrays.stream(loadedRestaurantClass.getMethods()).filter(m -> m.getName().equals("getRestaurantsFromRestServer")).findFirst();
-                var restaurantResult = getRestaurantsMethod.get().invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net"));
-                currentTest.appendMessage("instantiated Restaurant and loaded the Restaurant[]");
 
-                var orderInstance = x.getConstructor().newInstance();
-                currentTest.appendMessage("instantiated Order");
+                Method getRestaurantsMethod = null;
+
+                if (loadedRestaurantClass.isRecord()) {
+                    getRestaurantsMethod = loadedRestaurantClass.getDeclaredMethod("getRestaurantsFromRestServer", URL.class);
+                } else {
+                    getRestaurantsMethod = Arrays.stream(loadedRestaurantClass.getMethods()).filter(m -> m.getName().equals("getRestaurantsFromRestServer")).findFirst().orElse(null);
+                }
+
+                reportWriter.addTestResultInPoints(TestGroupGetRestaurantsImpl, new HtmlReportWriter.TestResultInPoints("getRestaurantsFromRestServer() present", getRestaurantsMethod != null ? 0.5f : 0f, getRestaurantsMethod != null ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
+                Object orderInstance = null;
+                Object restaurantResult = null;
+                boolean test1Success = false;
+                boolean test2Success = false;
+                boolean test3Success = false;
 
                 try {
-                    method.get().invoke(orderInstance, restaurantResult, new String[]{"Pizza1", "Pizza2"});
-                    currentTest.setMessage("invalid pizza combination 1 not found");
-                    break;
-                } catch (InvocationTargetException t) {
-                    // this is supposed to happen...
-                    currentTest.appendMessage("Order - invalid Pizza combination 1 detected");
-                }
+                    if (getRestaurantsMethod != null){
+                        getRestaurantsMethod.setAccessible(true);
+                        restaurantResult = getRestaurantsMethod.invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net"));
+                        currentTest.appendMessage("instantiated Restaurant and loaded the Restaurant[]");
+                    }
 
-                try {
-                    method.get().invoke(orderInstance, restaurantResult, new String[]{"Margarita", "Meat Lover"});
-                    currentTest.setMessage("invalid pizza combination 2 not found");
-                    break;
-                } catch (InvocationTargetException t) {
-                    // this is supposed to happen...
-                    currentTest.appendMessage("Order - invalid Pizza combination 2 detected");
-                }
+                    orderInstance = x.getConstructor().newInstance();
+                    currentTest.appendMessage("instantiated Order");
 
-                // this should return 1000 + 1400 + 100
-                int deliveryCost = (int) method.get().invoke(orderInstance, restaurantResult, new String[]{"Margarita", "Calzone"});
-                if (deliveryCost != 1000 + 1400 + 100) {
-                    currentTest.setMessage("delivery cost combination incorrect");
-                    break;
+                    try {
+                        method.get().invoke(orderInstance, restaurantResult, new String[]{"Pizza1", "Pizza2"});
+                        currentTest.setMessage("invalid pizza combination 1 not found");
+                    } catch (InvocationTargetException t) {
+                        // this is supposed to happen...
+                        currentTest.appendMessage("Order - invalid Pizza combination 1 detected");
+                        test1Success = true;
+                    }
+
+
+                    try {
+                        method.get().invoke(orderInstance, restaurantResult, new String[]{"Margarita", "Meat Lover"});
+                        currentTest.setMessage("invalid pizza combination 2 not found");
+                    } catch (InvocationTargetException t) {
+                        // this is supposed to happen...
+                        currentTest.appendMessage("Order - invalid Pizza combination 2 detected");
+                        test2Success = true;
+                    }
+
+                    // this should return 1000 + 1400 + 100
+                    int deliveryCost = (int) method.get().invoke(orderInstance, restaurantResult, new String[]{"Margarita", "Calzone"});
+                    if (deliveryCost != 1000 + 1400 + 100) {
+                        currentTest.setMessage("delivery cost combination incorrect");
+                    } else {
+                        test3Success = true;
+                    }
+
+                } catch (Exception orderEx) {
+                    currentTest.appendMessage("Order could not be instantiated - tests might be missing");
+                    currentTest.setWarning(true);
+
                 }
+                reportWriter.addTestResultInPoints(TestGroupGetRestaurantsImpl, new HtmlReportWriter.TestResultInPoints("getRestaurantsFromRestServer() implementation", restaurantResult != null ? 1.5f : 0f, restaurantResult != null ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+                reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 1 detected", test1Success ? 1f : 0f, test1Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
+                reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 2 detected", test2Success ? 1f : 0f, test2Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
+                reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("getDeliveryCost() calculated", test3Success ? 1f : 0f, test3Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
+
                 currentTest.appendMessage("Order - delivery cost correctly calculated");
-
-                result = true;
+                result = test1Success && test2Success && test3Success;
             } while (false);
 
             return result;
@@ -513,7 +643,9 @@ public class Checker extends ClassExecutionImplementationBase {
             var centralAreaMethod = loadedClass.getMethod("inCentralArea");
             var centralAreaResult = (boolean) centralAreaMethod.invoke(newInstance);
 
-            if (centralAreaResult == false){
+            reportWriter.addTestResultInPoints(TestGroupInCentralAreaImpl, new HtmlReportWriter.TestResultInPoints("AT check", centralAreaResult ? 1f : 0f, centralAreaResult ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
+            if (centralAreaResult == false) {
                 currentTest.appendMessage("Appleton Tower not (!) in central area");
                 currentTest.setWarning(true);
             } else {
@@ -522,7 +654,10 @@ public class Checker extends ClassExecutionImplementationBase {
 
             newInstance = ClassUtils.getConstructor(loadedClass, new Class[]{double.class, double.class}).newInstance(Constants.TestLng, Constants.TestLat);
             centralAreaResult = (boolean) centralAreaMethod.invoke(newInstance);
-            if (centralAreaResult){
+
+            reportWriter.addTestResultInPoints(TestGroupInCentralAreaImpl, new HtmlReportWriter.TestResultInPoints("FAR FAR AWAY check", centralAreaResult == false ? 1f : 0f, centralAreaResult == false ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
+            if (centralAreaResult) {
                 currentTest.appendMessage("FAR FAR AWAY  in (!) central area");
                 currentTest.setWarning(true);
             } else {

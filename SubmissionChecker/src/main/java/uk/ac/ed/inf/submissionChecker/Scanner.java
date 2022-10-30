@@ -83,38 +83,8 @@ public class Scanner {
          * Both will be removed afterwards
          */
         var submissionDirectories = Files.list(Paths.get(baseDirectory)).filter(d -> Files.isDirectory(d.toAbsolutePath())).map(e -> e.getParent().relativize(e)).toList();
-        Map<Path, List<Path>> solutionsInBaseDirectoryMap = pomFileDirectories.stream().map(e -> e).collect(Collectors.groupingBy(Path::normalize));
-
-        // needed as stream processing with lambdas requires the object to be final
-        var testDirectories = pomFileDirectories.stream().toList();
-        var directoriesWithoutSolution = submissionDirectories
-                .stream()
-                .filter(d -> testDirectories
-                        .stream()
-                        .anyMatch(pd -> pd.toString().contains(d.toString())) == false)
-                .toList();
-
-        for (Path directoryWithoutSolution : directoriesWithoutSolution) {
-            System.err.println("ERR >>> " + directoryWithoutSolution.toString() + " has no pom.xml - entries are not processed");
-        }
-
-        var directoriesWithSeveralSolutions = pomFileDirectories.stream()
-                // this prevents null entries further down if the pom.xml is directly below the root
-                .map(p -> p.getParent() != null ? p.getParent() : p)
-                .collect(Collectors.groupingBy(e -> e.toString()))
-                .entrySet()
-                .stream()
-                .filter(e -> e.getValue().size() > 1)
-                .map(e -> e.getKey())
-                .toList();
-
-        for (var entry : directoriesWithSeveralSolutions) {
-            System.err.println("ERR >>> " + entry + " has several pom.xml (solutions) - entries are not processed");
-            pomFileDirectories = pomFileDirectories.stream().filter(d -> d.toString().contains(entry) == false).toList();
-        }
-
-
         List<ISubmissionCheckerCommand> commandList = List.of(runtimeConfiguration.commandsToExecute());
+        List<Path> errorPomDirs = new ArrayList<>();
 
         /**
          * traverse all directories and execute the commands in the configuration. Usually this would be clean and build the package -> then check for the JAR file (class command)
@@ -122,7 +92,8 @@ public class Scanner {
         for (Path pomDir : pomFileDirectories) {
 
             String currentDir = Paths.get(baseDirectory).resolve(pomDir).toAbsolutePath().toString();
-            System.out.println("Processing: " + currentDir);
+
+            System.out.println("\n\n>>>>>>>>>>>>>>>>>>> Processing: " + pomDir);
             HtmlReportWriter reportWriter;
             String submissionReportName = null;
             try {
@@ -151,6 +122,9 @@ public class Scanner {
                         String error = String.format("ERR %d for %s >>> while executing: %s", result, currentDir, currentCommand.getCommandDescription());
                         System.err.println(error);
                         reportWriter.writeln(error);
+
+                        // remember for later
+                        errorPomDirs.add(pomDir);
                     } else {
                         System.out.println("Executed : " + currentCommand.getCommandDescription());
                     }
@@ -172,6 +146,48 @@ public class Scanner {
             } catch (IOException e) {
                 System.err.println("Error writing the report: " + e);
             }
+        }
+
+        System.out.flush();
+        System.err.flush();
+
+        Map<Path, List<Path>> solutionsInBaseDirectoryMap = pomFileDirectories.stream().map(e -> e).collect(Collectors.groupingBy(Path::normalize));
+
+        // needed as stream processing with lambdas requires the object to be final
+        var testDirectories = pomFileDirectories.stream().toList();
+        var directoriesWithoutSolution = submissionDirectories
+                .stream()
+                .filter(d -> testDirectories
+                        .stream()
+                        .anyMatch(pd -> pd.toString().contains(d.toString())) == false)
+                .toList();
+
+
+        var directoriesWithSeveralSolutions = pomFileDirectories.stream()
+                // this prevents null entries further down if the pom.xml is directly below the root
+                .map(p -> p.getParent() != null ? p.getParent() : p)
+                .collect(Collectors.groupingBy(e -> e.toString()))
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().size() > 1)
+                .map(e -> e.getKey())
+                .toList();
+
+
+        errorPomDirs = errorPomDirs.stream().distinct().toList();
+        if (errorPomDirs.size() > 0){
+            System.err.println("\n\nList of erroneous submission directories:\n");
+            errorPomDirs.forEach(p -> System.err.println(p.toString()));
+        }
+
+
+        for (Path directoryWithoutSolution : directoriesWithoutSolution) {
+            System.err.println("ERR >>> " + directoryWithoutSolution.toString() + " has no pom.xml - entries are not processed");
+        }
+
+        for (var entry : directoriesWithSeveralSolutions) {
+            System.err.println("ERR >>> " + entry + " has several pom.xml (solutions) - entries are not processed");
+            pomFileDirectories = pomFileDirectories.stream().filter(d -> d.toString().contains(entry) == false).toList();
         }
     }
 

@@ -4,7 +4,9 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HtmlReportWriter {
 
@@ -21,12 +23,42 @@ public class HtmlReportWriter {
      */
     private List<FunctionalTestResult> functionalTestResults = new ArrayList<>();
 
+
+    public enum TestResultType {
+        Success,
+        Warning,
+        Error
+    }
+
+    /**
+     * defines the point result for a test
+     *
+     * @param test           which test was done
+     * @param pointsAchieved which result was yielded
+     */
+    public record TestResultInPoints(String test, float pointsAchieved, TestResultType testResultType) {
+
+    }
+
+    private Map<String, List<TestResultInPoints>> testResultInPointMap = new HashMap<>();
+
+    /**
+     * add a new test result
+     *
+     * @param testGroup
+     * @param result
+     */
+    public void addTestResultInPoints(String testGroup, TestResultInPoints result) {
+        testResultInPointMap.putIfAbsent(testGroup, new ArrayList<>());
+        testResultInPointMap.get(testGroup).add(result);
+    }
+
     /**
      * add a functional test result
      *
-     * @param title     title in the table
-     * @param message   parameters for the functional test (can be null)
-     * @param success   true or false
+     * @param title   title in the table
+     * @param message parameters for the functional test (can be null)
+     * @param success true or false
      * @return the created test result object so it can be changed afterwards
      */
     public FunctionalTestResult addFunctionalTestResult(String title, String message, boolean success) {
@@ -35,10 +67,11 @@ public class HtmlReportWriter {
 
     /**
      * add a result
+     *
      * @param result the result to add
      * @return the passed in result
      */
-    public FunctionalTestResult addFunctionalTestResult(FunctionalTestResult result){
+    public FunctionalTestResult addFunctionalTestResult(FunctionalTestResult result) {
         functionalTestResults.add(result);
         return result;
     }
@@ -49,21 +82,37 @@ public class HtmlReportWriter {
     public String generateFunctionalTestResultsTable() {
         StringBuilder result = new StringBuilder();
 
+        result.append("<div><h3>Point results:</h3><table id='pointsResultTable'>");
+        for (var testGroup : testResultInPointMap.keySet()) {
+            result.append(String.format("<tr><td>%s</td><td></td><td></td></tr>", testGroup));
+
+            for (var testResultInPoint : testResultInPointMap.get(testGroup)) {
+                result.append(String.format("<tr><td></td><td class='%s'>%s</td><td>%.2f</td></tr>", switch (testResultInPoint.testResultType) {
+                    case Success -> "resultInPointOk";
+                    case Error -> "resultInPointError";
+                    case Warning -> "resultInPointWarning";
+                }, testResultInPoint.test, testResultInPoint.pointsAchieved));
+            }
+
+            result.append(String.format("<tr><td></td><td>SUBTOTAL:</td><td>%.2f</td></tr>", testResultInPointMap.get(testGroup).stream().map(p -> p.pointsAchieved).reduce(Float::sum).orElse(0f)));
+        }
+        result.append("</table></div>");
+
+        result.append(String.format("<h3>Total points achieved: %.2f </h3>", testResultInPointMap.keySet().stream().flatMap(e -> testResultInPointMap.get(e).stream()).map(e -> e.pointsAchieved).reduce(Float::sum).orElse(0f)));
         result.append("<div><h3>Functional test results:</h3><table id='functionalTestResultsTable'>");
         for (var testResult : functionalTestResults) {
-            result.append(String.format("<tr class='%s'><td class='%s'></td><td>%.1f</td><td>%s</td><td>%s</td></tr>",
-                    testResult.isWarning() ? "resultWarning" : "", testResult.success ? "resultOk" : "resultError", testResult.getPointsAchieved(), testResult.title, testResult.message));
+            result.append(String.format("<tr class='%s'><td class='%s'></td><td>%s</td><td>%s</td></tr>",
+                    testResult.isWarning() ? "resultWarning" : "", testResult.success ? "resultOk" : "resultError", testResult.title, testResult.message));
         }
-        result.append("</table>");
-        result.append(String.format("<h3>Total points achieved: %.1f </h3>", functionalTestResults.stream().map(r -> r.getPointsAchieved()).reduce(Float::sum)));
-        result.append("</div>");
+        result.append("</table></div>");
         return result.toString();
     }
 
     /**
      * create a new instance of the HTML Report Writer
-     * @param reportFileName which filename to create
-     * @param title the title to use
+     *
+     * @param reportFileName   which filename to create
+     * @param title            the title to use
      * @param templateFileName the template
      * @throws IOException
      */
