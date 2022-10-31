@@ -333,7 +333,7 @@ public class Checker extends ClassExecutionImplementationBase {
                     try {
                         do {
                             // HOVER test
-                            var posAfterMove = singleParam.getType().equals(double.class) ? method.get().invoke(newInstance, null) : method.get().invoke(newInstance, (Double) null) ;
+                            var posAfterMove = singleParam.getType().equals(double.class) ? method.get().invoke(newInstance, null) : method.get().invoke(newInstance, (Double) null);
                             if (getFieldValueFromLngLat(posAfterMove, "lat") != Constants.AppletonLat) {
                                 currentTest.appendMessage("Lat after hover (null) is not correct");
                                 break;
@@ -346,7 +346,7 @@ public class Checker extends ClassExecutionImplementationBase {
 
                             test1Success = true;
 
-                            posAfterMove = singleParam.getType().equals(double.class) ? method.get().invoke(newInstance, null) : method.get().invoke(newInstance, new Double(90)) ;
+                            posAfterMove = singleParam.getType().equals(double.class) ? method.get().invoke(newInstance, null) : method.get().invoke(newInstance, new Double(90));
                             double nextLng = Constants.AppletonLng + Constants.MoveDistance * Math.cos(90);
                             double nextLat = Constants.AppletonLat + Constants.MoveDistance * Math.sin(90);
 
@@ -361,8 +361,8 @@ public class Checker extends ClassExecutionImplementationBase {
 
                             test2Success = true;
 
-                        } while(false);
-                    } catch (Exception moveNextEx){
+                        } while (false);
+                    } catch (Exception moveNextEx) {
                         currentTest.appendMessage("nextPosition() test - exception: " + moveNextEx.getMessage());
                     }
 
@@ -435,15 +435,26 @@ public class Checker extends ClassExecutionImplementationBase {
             return true;
         }, reportWriter, "Order class structural checks", "");
 
+        reportWriter.addTestResultInPoints(TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("Order object present", loadedOrderClass.get() != null ? 0.5f : 0f, loadedOrderClass.get() != null ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+
         // if no order is loaded get out
         if (loadedOrderClass.get() == null) {
+            reportWriter.addTestResultInPoints(TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("int getDeliveryCost(Restaurant[], String...) present", 0f, HtmlReportWriter.TestResultType.Error));
+            reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 1 detected", 0f, HtmlReportWriter.TestResultType.Error));
+            reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 2 detected", 0f, HtmlReportWriter.TestResultType.Error));
+            reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("getDeliveryCost() calculated", 0f, HtmlReportWriter.TestResultType.Error));
             return false;
         }
 
-        reportWriter.addTestResultInPoints(TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("Order object present", 0.5f, HtmlReportWriter.TestResultType.Success));
+
 
         testClassForCondition(loadedOrderClass.get(), (Class x, FunctionalTestResult currentTest) -> {
             var result = false;
+            boolean test1Success = false;
+            boolean test2Success = false;
+            boolean test3Success = false;
+            Object orderInstance = null;
+            boolean isStringArray = false;
 
             do {
                 var method = Arrays.stream(x.getMethods()).filter(m -> m.getName().equals("getDeliveryCost")).findFirst();
@@ -475,8 +486,11 @@ public class Checker extends ClassExecutionImplementationBase {
                     }
                     currentTest.appendMessage("getDeliveryCost() 1st parameter is Restaurant[]");
 
-                    if (params[1].isVarArgs() == false || params[1].getType().getComponentType().equals(String.class) == false) {
-                        currentTest.setMessage("param 1 is either no varargs, or not of type String...");
+                    if (params[1].getType().getComponentType().equals(String.class) == false) {
+                        isStringArray = params[1].getType().getComponentType().isArray()  && params[1].getType().getComponentType().equals(String.class);
+                        if (isStringArray == false){
+                            currentTest.setMessage("param 1 is either no varargs, or not of type String... or no String[]");
+                        }
                         break;
                     }
 
@@ -485,8 +499,9 @@ public class Checker extends ClassExecutionImplementationBase {
 
                 reportWriter.addTestResultInPoints(TestGroupRestaurantOrder, new HtmlReportWriter.TestResultInPoints("int getDeliveryCost(Restaurant[], String...) present", result ? 0.5f : 0f, result ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
                 if (result) {
-                    currentTest.appendMessage("getDeliveryCost() 2nd parameter is varargs String");
+                    currentTest.appendMessage("getDeliveryCost() 2nd parameter is varargs String or String[]");
                 } else {
+
                     // no further checks from here
                     break;
                 }
@@ -501,23 +516,19 @@ public class Checker extends ClassExecutionImplementationBase {
                     getRestaurantsMethod = Arrays.stream(loadedRestaurantClass.getMethods()).filter(m -> m.getName().equals("getRestaurantsFromRestServer")).findFirst().orElse(null);
                 }
 
-                reportWriter.addTestResultInPoints(TestGroupGetRestaurantsImpl, new HtmlReportWriter.TestResultInPoints("getRestaurantsFromRestServer() present", getRestaurantsMethod != null ? 0.5f : 0f, getRestaurantsMethod != null ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
 
-                Object orderInstance = null;
                 Object restaurantResult = null;
-                boolean test1Success = false;
-                boolean test2Success = false;
-                boolean test3Success = false;
+
 
                 try {
-                    if (getRestaurantsMethod != null){
+                    if (getRestaurantsMethod != null) {
                         getRestaurantsMethod.setAccessible(true);
 
-                        try{
+                        try {
                             restaurantResult = getRestaurantsMethod.invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net"));
-                        } catch (Exception ex){
+                        } catch (Exception ex) {
                             // retry with /
-                            if (((InvocationTargetException) ex).getTargetException().getClass().equals(UnknownHostException.class)){
+                            if (((InvocationTargetException) ex).getTargetException().getClass().equals(UnknownHostException.class)) {
                                 restaurantResult = getRestaurantsMethod.invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net/"));
                             }
                         }
@@ -560,17 +571,22 @@ public class Checker extends ClassExecutionImplementationBase {
                     currentTest.setWarning(true);
 
                 }
-                reportWriter.addTestResultInPoints(TestGroupGetRestaurantsImpl, new HtmlReportWriter.TestResultInPoints("getRestaurantsFromRestServer() implementation", restaurantResult != null ? 1.5f : 0f, restaurantResult != null ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
-                reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 1 detected", test1Success ? 1f : 0f, test1Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
-                reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 2 detected", test2Success ? 1f : 0f, test2Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
-                reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("getDeliveryCost() calculated", test3Success ? 1f : 0f, test3Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
 
                 currentTest.appendMessage("Order - delivery cost correctly calculated");
+
+
                 result = test1Success && test2Success && test3Success;
+
             } while (false);
+
+            reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 1 detected", test1Success ? 1f : 0f, test1Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
+            reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("Invalid Pizza combination 2 detected", test2Success ? 1f : 0f, test2Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
+            reportWriter.addTestResultInPoints(TestGroupGetDeliveryCostImpl, new HtmlReportWriter.TestResultInPoints("getDeliveryCost() calculated", test3Success ? 1f : 0f, test3Success ? HtmlReportWriter.TestResultType.Success : (orderInstance != null ? HtmlReportWriter.TestResultType.Error : HtmlReportWriter.TestResultType.Warning)));
+
 
             return result;
         }, reportWriter, "Order class methods checks", "");
+
 
         return true;
     }
@@ -598,31 +614,42 @@ public class Checker extends ClassExecutionImplementationBase {
 
             do {
                 var method = Arrays.stream(x.getMethods()).filter(m -> m.getName().equals("getRestaurantsFromRestServer")).findFirst();
-                if (method.isPresent() == false) {
-                    currentTest.setMessage("no method getRestaurantsFromRestServer() defined");
-                    break;
-                }
-                currentTest.appendMessage("getRestaurantsFromRestServer() defined");
+                boolean methodResult = false;
 
-                if (method.get().getReturnType().isArray() == false || method.get().getReturnType().getComponentType().equals(loadedRestaurantClass.get()) == false) {
-                    currentTest.setMessage("getRestaurantsFromRestServer() does not return Restaurant[]");
-                    break;
-                }
-                currentTest.appendMessage("getRestaurantsFromRestServer() returns Restaurant[]");
+                do {
+                    if (method.isPresent() == false) {
+                        currentTest.setMessage("no method getRestaurantsFromRestServer() defined");
+                        break;
+                    }
+                    currentTest.appendMessage("getRestaurantsFromRestServer() defined");
 
-                var params = method.get().getParameters();
-                if (params.length != 1 && params[0].getType().equals(URL.class) == false) {
-                    currentTest.setMessage("getRestaurantsFromRestServer() does not take an URL parameter");
+                    if (method.get().getReturnType().isArray() == false || method.get().getReturnType().getComponentType().equals(loadedRestaurantClass.get()) == false) {
+                        currentTest.setMessage("getRestaurantsFromRestServer() does not return Restaurant[]");
+                        break;
+                    }
+                    currentTest.appendMessage("getRestaurantsFromRestServer() returns Restaurant[]");
+
+                    var params = method.get().getParameters();
+                    if (params.length != 1 && params[0].getType().equals(URL.class) == false) {
+                        currentTest.setMessage("getRestaurantsFromRestServer() does not take an URL parameter");
+                        break;
+                    }
+                    currentTest.appendMessage("getRestaurantsFromRestServer() takes a URL");
+
+                    methodResult = true;
+                } while(false);
+
+                reportWriter.addTestResultInPoints(TestGroupGetRestaurantsImpl, new HtmlReportWriter.TestResultInPoints("getRestaurantsFromRestServer() present", methodResult ? 0.5f : 0f, methodResult ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
+                if (methodResult == false){
                     break;
                 }
-                currentTest.appendMessage("getRestaurantsFromRestServer() takes a URL");
 
                 Object restaurantResult = null;
-                try{
+                try {
                     restaurantResult = method.get().invoke(loadedRestaurantClass.get(), new URL("https://ilp-rest.azurewebsites.net"));
-                } catch (Exception ex){
+                } catch (Exception ex) {
                     // retry with /
-                    if (((InvocationTargetException) ex).getTargetException().getClass().equals(UnknownHostException.class)){
+                    if (((InvocationTargetException) ex).getTargetException().getClass().equals(UnknownHostException.class)) {
                         restaurantResult = method.get().invoke(loadedRestaurantClass.get(), new URL("https://ilp-rest.azurewebsites.net/"));
                     }
                 }
@@ -649,8 +676,11 @@ public class Checker extends ClassExecutionImplementationBase {
                     break;
                 }
 
+
                 result = true;
             } while (false);
+
+            reportWriter.addTestResultInPoints(TestGroupGetRestaurantsImpl, new HtmlReportWriter.TestResultInPoints("getRestaurantsFromRestServer() implementation", result ? 1.5f : 0f, result ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
 
             return result;
         }, reportWriter, "Restaurant class methods checks", "");
