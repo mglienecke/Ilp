@@ -27,7 +27,7 @@ public class Checker extends ClassExecutionImplementationBase {
 
     public final String TestGroupLngLat = "LngLat checks";
     public final String TestGroupRestaurantOrder = "Restaurant Order checks";
-    public final String TestGroupInCentralAreaImpl = "nCentralArea() implementation";
+    public final String TestGroupInCentralAreaImpl = "inCentralArea() implementation";
     public final String TestGroupDistanceToImpl = "distanceTo() implementation";
 
     public final String TestGroupCloseToImpl = "closeTo() implementation";
@@ -312,7 +312,7 @@ public class Checker extends ClassExecutionImplementationBase {
                 currentTest.appendMessage("nextPosition() takes 1 parameter");
 
                 singleParam = Arrays.stream(params).findFirst().get();
-                if (singleParam.getType().equals(double.class) == false && singleParam.getType().isEnum() == false) {
+                if (singleParam.getType().equals(double.class) == false && singleParam.getType().equals(Double.class) == false && singleParam.getType().isEnum() == false) {
                     currentTest.setMessage("no method nextPosition() (either with enum or double)  defined. A single param is present, but not of the proper kind");
                     break;
                 }
@@ -322,7 +322,7 @@ public class Checker extends ClassExecutionImplementationBase {
 
             reportWriter.addTestResultInPoints(TestGroupNextPositionImpl, new HtmlReportWriter.TestResultInPoints("nextPosition(double / enum) present", success ? 0.5f : 0f, success ? HtmlReportWriter.TestResultType.Success : HtmlReportWriter.TestResultType.Error));
 
-            if (singleParam != null && singleParam.getType().equals(double.class)) {
+            if (singleParam != null && (singleParam.getType().equals(double.class) || singleParam.getType().equals(Double.class))) {
                 if (canConstructorBeUsed) {
                     var newInstance = ClassUtils.getConstructor(x, new Class[]{double.class, double.class}).newInstance(Constants.AppletonLng, Constants.AppletonLat);
 
@@ -332,7 +332,7 @@ public class Checker extends ClassExecutionImplementationBase {
                     try {
                         do {
                             // HOVER test
-                            var posAfterMove = method.get().invoke(newInstance, null);
+                            var posAfterMove = singleParam.getType().equals(double.class) ? method.get().invoke(newInstance, null) : method.get().invoke(newInstance, (Double) null) ;
                             if (getFieldValueFromLngLat(posAfterMove, "lat") != Constants.AppletonLat) {
                                 currentTest.appendMessage("Lat after hover (null) is not correct");
                                 break;
@@ -345,15 +345,15 @@ public class Checker extends ClassExecutionImplementationBase {
 
                             test1Success = true;
 
-                            posAfterMove = method.get().invoke(newInstance, 90);
+                            posAfterMove = singleParam.getType().equals(double.class) ? method.get().invoke(newInstance, null) : method.get().invoke(newInstance, new Double(90)) ;
                             double nextLng = Constants.AppletonLng + Constants.MoveDistance * Math.cos(90);
                             double nextLat = Constants.AppletonLat + Constants.MoveDistance * Math.sin(90);
 
-                            if (getFieldValueFromLngLat(posAfterMove, "lat") != nextLat) {
+                            if (round(getFieldValueFromLngLat(posAfterMove, "lat"), 3) != round(nextLat, 3)) {
                                 currentTest.appendMessage("Lat after North (90 deg) is not correct");
                                 break;
                             }
-                            if (getFieldValueFromLngLat(posAfterMove, "lng") != nextLng) {
+                            if (round(getFieldValueFromLngLat(posAfterMove, "lng"), 3) != round(nextLng, 3)) {
                                 currentTest.appendMessage("Lng after North (90 deg) is not correct");
                                 break;
                             }
@@ -394,6 +394,15 @@ public class Checker extends ClassExecutionImplementationBase {
 
             return true;
         }, reportWriter, "nextPosition() checks (structure + semantics)", "");
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 
     private double getFieldValueFromLngLat(Object obj, String fieldName) {

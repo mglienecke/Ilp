@@ -30,6 +30,7 @@ public class Scanner {
 
     /**
      * launching the scanner using the config file and a base directory
+     *
      * @param args
      */
     public static void main(String[] args) throws IOException {
@@ -40,7 +41,7 @@ public class Scanner {
         }
 
         var configFileName = args[0];
-        if (Paths.get(configFileName).toFile().exists() == false){
+        if (Paths.get(configFileName).toFile().exists() == false) {
             System.err.println("The file: " + configFileName + " does not exist");
             System.exit(2);
         }
@@ -59,7 +60,7 @@ public class Scanner {
 
 
         baseDirectory = args[1];
-        if (Paths.get(baseDirectory).toFile().exists() == false){
+        if (Paths.get(baseDirectory).toFile().exists() == false) {
             System.err.println("The base directory: " + baseDirectory + " does not exist");
             System.exit(3);
         }
@@ -85,6 +86,7 @@ public class Scanner {
         var submissionDirectories = Files.list(Paths.get(baseDirectory)).filter(d -> Files.isDirectory(d.toAbsolutePath())).map(e -> e.getParent().relativize(e)).toList();
         List<ISubmissionCheckerCommand> commandList = List.of(runtimeConfiguration.commandsToExecute());
         List<Path> errorPomDirs = new ArrayList<>();
+        List<Path> missingJarPomDirs = new ArrayList<>();
 
         /**
          * traverse all directories and execute the commands in the configuration. Usually this would be clean and build the package -> then check for the JAR file (class command)
@@ -114,6 +116,7 @@ public class Scanner {
                 try {
                     if (currentCommand.checkForDependencies(currentDir) == false) {
                         System.err.format("Skipped execution as (one of) the file(s): %s does not exist\n", String.join(", ", currentCommand.getDependencyFiles()));
+                        missingJarPomDirs.add(pomDir);
                         break;
                     }
 
@@ -129,6 +132,7 @@ public class Scanner {
                         System.out.println("Executed : " + currentCommand.getCommandDescription());
                     }
                 } catch (Exception e) {
+                    System.err.println("EXCEPTION: " + pomDir.toString());
                     System.err.println(e);
                 }
             }
@@ -175,7 +179,7 @@ public class Scanner {
 
 
         errorPomDirs = errorPomDirs.stream().distinct().toList();
-        if (errorPomDirs.size() > 0){
+        if (errorPomDirs.size() > 0) {
             System.err.println("\n\nList of erroneous submission directories:\n");
             errorPomDirs.forEach(p -> System.err.println(p.toString()));
         }
@@ -188,6 +192,13 @@ public class Scanner {
         for (var entry : directoriesWithSeveralSolutions) {
             System.err.println("ERR >>> " + entry + " has several pom.xml (solutions) - entries are not processed");
             pomFileDirectories = pomFileDirectories.stream().filter(d -> d.toString().contains(entry) == false).toList();
+        }
+
+        if (missingJarPomDirs.size() > 0){
+            System.err.println("Directories without JAR-file");
+            for (Path directoryWithoutJar : missingJarPomDirs) {
+                System.err.println(directoryWithoutJar.toString());
+            }
         }
     }
 
