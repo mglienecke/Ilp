@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class HtmlReportWriter {
 
     private BufferedWriter writer;
@@ -181,7 +182,7 @@ public class HtmlReportWriter {
         try {
             var fileInput = new FileInputStream(javaFilePath.toFile());
             var fileContent = new String(fileInput.readAllBytes());
-            bodyContent.append(fileContent);
+            bodyContent.append(org.apache.commons.lang3.StringEscapeUtils.escapeHtml4(fileContent));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {

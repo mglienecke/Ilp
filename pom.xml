@@ -5,7 +5,6 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>IlpSampleJar</module>
-		<module>IlpAssignmentChecker</module>
         <module>IlpRestServer</module>
         <module>IlpRestTest</module>
         <module>IlpFileDownloadSample</module>

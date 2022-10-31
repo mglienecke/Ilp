@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -511,7 +512,16 @@ public class Checker extends ClassExecutionImplementationBase {
                 try {
                     if (getRestaurantsMethod != null){
                         getRestaurantsMethod.setAccessible(true);
-                        restaurantResult = getRestaurantsMethod.invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net"));
+
+                        try{
+                            restaurantResult = getRestaurantsMethod.invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net"));
+                        } catch (Exception ex){
+                            // retry with /
+                            if (((InvocationTargetException) ex).getTargetException().getClass().equals(UnknownHostException.class)){
+                                restaurantResult = getRestaurantsMethod.invoke(loadedRestaurantClass, new URL("https://ilp-rest.azurewebsites.net/"));
+                            }
+                        }
+
                         currentTest.appendMessage("instantiated Restaurant and loaded the Restaurant[]");
                     }
 
@@ -607,7 +617,16 @@ public class Checker extends ClassExecutionImplementationBase {
                 }
                 currentTest.appendMessage("getRestaurantsFromRestServer() takes a URL");
 
-                var restaurantResult = method.get().invoke(loadedRestaurantClass.get(), new URL("https://ilp-rest.azurewebsites.net"));
+                Object restaurantResult = null;
+                try{
+                    restaurantResult = method.get().invoke(loadedRestaurantClass.get(), new URL("https://ilp-rest.azurewebsites.net"));
+                } catch (Exception ex){
+                    // retry with /
+                    if (((InvocationTargetException) ex).getTargetException().getClass().equals(UnknownHostException.class)){
+                        restaurantResult = method.get().invoke(loadedRestaurantClass.get(), new URL("https://ilp-rest.azurewebsites.net/"));
+                    }
+                }
+
                 if (restaurantResult == null) {
                     currentTest.setMessage("getRestaurantsFromRestServer() does not take an URL parameter");
                     break;
