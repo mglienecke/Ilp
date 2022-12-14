@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>$title</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/languages/java.min.js"></script>
+
+</head>
+<style>
+    .commandOutput {
+        font-family: monospace;
+    }
+
+    #functionalTestResultsTable, th, td {
+        border: 1px solid black;
+
+    }
+
+
+    #functionalTestResultsTable td:nth-child(1){
+        width: 10pc;
+        font-weight: bold;
+    }
+
+    #functionalTestResultsTable td:nth-child(2){
+        width: 10pc;
+        font-weight: bold;
+    }
+
+    #functionalTestResultsTable td:nth-child(3){
+        width: 30pc;
+        font-weight: bold;
+    }
+
+    #functionalTestResultsTable td:nth-child(4){
+        width: 50pc;
+        font-weight: normal;
+        font-size: small;
+    }
+
+    .resultWarning {
+        background-color: lightsalmon;
+        opacity: 0.7;
+    }
+
+
+    .resultOk {
+        font-weight: bolder;
+        color: green;
+    }
+
+    .resultOk::after {
+        content: "OK";
+    }
+
+    .resultError{
+        font-weight: bolder;
+        color: red;
+    }
+    .resultError::after {
+        content: "ERR";
+    }
+
+
+    .resultInPointError{
+        font-weight: bolder;
+        color: red;
+    }
+
+    .resultInPointWarning {
+        background-color: lightsalmon;
+        opacity: 0.7;
+    }
+
+
+    .resultInPointOk {
+        font-weight: bolder;
+        color: green;
+    }
+
+</style>
+<body>
+<h2>$title</h2>
+$functionalTestResult
+$body
+</body>
+<script>hljs.highlightAll();</script>
+</html>

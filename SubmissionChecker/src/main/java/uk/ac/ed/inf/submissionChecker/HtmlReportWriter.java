@@ -157,11 +157,11 @@ public class HtmlReportWriter {
     }
 
 
-    public void writeReport() throws IOException {
+    public void writeReport(boolean writeResultTable) throws IOException {
         InputStream template = getFileFromResourceAsStream(templateFileName);
         String htmlString = new String(template.readAllBytes(), StandardCharsets.UTF_8);
         htmlString = htmlString.replace("$title", title);
-        htmlString = htmlString.replace("$functionalTestResult", generateFunctionalTestResultsTable());
+        htmlString = htmlString.replace("$functionalTestResult", writeResultTable ? generateFunctionalTestResultsTable() : "");
         htmlString = htmlString.replace("$body", bodyContent.toString());
         writer.write(htmlString);
         writer.flush();

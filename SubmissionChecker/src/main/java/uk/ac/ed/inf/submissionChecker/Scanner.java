@@ -1,6 +1,7 @@
 package uk.ac.ed.inf.submissionChecker;
 
 import com.google.gson.Gson;
+import uk.ac.ed.inf.submissionChecker.commands.CommandType;
 import uk.ac.ed.inf.submissionChecker.commands.ISubmissionCheckerCommand;
 import uk.ac.ed.inf.submissionChecker.config.SubmissionCheckerConfig;
 
@@ -91,7 +92,7 @@ public class Scanner {
         /**
          * traverse all directories and execute the commands in the configuration. Usually this would be clean and build the package -> then check for the JAR file (class command)
          */
-        for (Path pomDir : pomFileDirectories) {
+        for (Path pomDir : submissionDirectories) {
 
             String currentDir = Paths.get(baseDirectory).resolve(pomDir).toAbsolutePath().toString();
 
@@ -137,15 +138,12 @@ public class Scanner {
                 }
             }
 
-            /**
-             * generate the functional tests table (will be on top) and add the submitted JAVA files (easier reading)
-             */
-            reportWriter.generateFunctionalTestResultsTable();
             reportWriter.appendJavaSourceFiles(currentDir, getJavaFilesInSubmissionDirectory(currentDir));
 
             // write the final report
             try {
-                reportWriter.writeReport();
+                // is there any command which is a class command and thus would generate a functional result table
+                reportWriter.writeReport(commandList.stream().anyMatch(c -> c.getCommandType() == CommandType.ClassExecution));
                 System.out.println("Report written to: " + reportWriter.getReportFileName());
             } catch (IOException e) {
                 System.err.println("Error writing the report: " + e);

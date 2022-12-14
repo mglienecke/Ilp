@@ -1,0 +1,7 @@
+{
+  "submissionReportPattern": "%s_SubmissionReport.html",
+  "reportTemplateFile": "reporttemplateCW2.html",
+  "commands": [
+
+  ]
+}

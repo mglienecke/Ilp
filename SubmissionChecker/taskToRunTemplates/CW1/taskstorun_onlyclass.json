@@ -1,6 +1,6 @@
 {
   "submissionReportPattern": "%s_SubmissionReport.html",
-  "reportTemplateFile": "reporttemplate.html",
+  "reportTemplateFile": "reporttemplateCW1.html",
   "commands": [
     {
       "type": "ClassExecution",
